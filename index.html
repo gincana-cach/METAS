@@ -4,13 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gerenciamento de Metas Escolares com Ranking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* Estilos gerais */
+        :root {
+            --primary-color: #00796b;
+            --primary-dark: #00695c;
+            --secondary-color: #26a69a;
+            --accent-color: #ff9800;
+            --background-light: #f7f9fc;
+            --text-dark: #333;
+            --text-light: #f0f0f0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f4f7f6;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right top, #e0f7fa, #f1f8e9);
             margin: 0;
-            padding: 15px;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -22,170 +36,296 @@
             width: 100%;
             max-width: 800px;
             background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px var(--shadow-color);
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Cabeçalho do App */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-light);
+        }
+        .app-header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        #settings-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        #settings-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: rotate(45deg);
+        }
+        #settings-btn.active {
+            background-color: white;
+            color: var(--primary-color);
         }
 
         /* Estilo das abas */
         .tabs {
             display: flex;
-            background-color: #00796b;
-            overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            flex-wrap: wrap; 
+            background-color: var(--primary-dark);
+            padding: 5px;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
         }
-        .tabs::-webkit-scrollbar { display: none; }
 
         .tab-link {
             background-color: transparent;
-            color: white;
+            color: rgba(255, 255, 255, 0.8);
             border: none;
-            padding: 14px 18px;
+            padding: 12px 15px;
             cursor: pointer;
             font-size: 14px;
-            transition: background-color 0.3s, color 0.3s;
-            flex-shrink: 0;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            margin: 3px;
+            text-align: center;
+            flex-grow: 1;
             border-bottom: 3px solid transparent;
-            white-space: nowrap;
         }
 
-        .tab-link:hover { background-color: #00897b; }
+        .tab-link:hover { 
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
         .tab-link.active {
-            border-bottom: 3px solid #ffffff;
+            background-color: var(--background-light);
+            color: var(--primary-dark);
             font-weight: 600;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        /* Conteúdo das abas */
-        .tab-content {
+        /* Conteúdo das abas e painel de config */
+        .tab-content, #settings {
             display: none;
-            padding: 25px 30px;
-            animation: fadeIn 0.4s;
+            padding: 30px 35px;
+            animation: fadeIn 0.5s ease-out;
         }
-        .tab-content.active { display: block; }
+        .tab-content.active, #settings.active { display: block; }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        h2 { margin-top: 0; color: #333; font-size: 22px; }
-        h3 { margin-top: 25px; border-bottom: 2px solid #eee; padding-bottom: 5px; color: #00796b;}
+        h2 { margin-top: 0; color: var(--text-dark); font-size: 24px; font-weight: 600; }
+        h3 { margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 8px; color: var(--primary-color); font-weight: 600;}
 
-        .form-group { margin-bottom: 18px; }
+        .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #555; font-size: 15px; }
         .form-group input, .form-group select {
             width: 100%;
-            padding: 12px;
+            padding: 12px 15px;
             border: 1px solid #dcdcdc;
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 121, 107, 0.15);
         }
 
         .calculate-btn, .action-btn {
             width: 100%;
-            padding: 14px;
+            padding: 15px;
             margin-top: 10px;
-            background-color: #26a69a;
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 121, 107, 0.2);
         }
-        .calculate-btn:hover, .action-btn:hover { background-color: #00897b; }
+        .calculate-btn:hover, .action-btn:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 121, 107, 0.3);
+        }
 
         .result {
-            margin-top: 20px;
-            padding: 18px;
-            background-color: #e0f2f1;
-            border-left: 5px solid #00796b;
-            border-radius: 0 8px 8px 0;
+            margin-top: 25px;
+            padding: 20px;
+            background: linear-gradient(to right, #e0f2f1, #e8f5e9);
+            border-left: 6px solid var(--primary-color);
+            border-radius: 0 12px 12px 0;
             font-size: 18px;
             font-weight: 500;
             text-align: center;
-            min-height: 25px;
-            color: #004d40;
+            color: var(--primary-dark);
         }
         
-        /* Estilos para turmas */
         .turma-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: 1fr 0.8fr 1.2fr 1fr 1fr;
+            gap: 15px;
             align-items: center;
             margin-bottom: 12px;
-            padding-bottom: 12px;
+            padding: 10px;
             border-bottom: 1px solid #eee;
+            border-left: 6px solid #ccc;
+            border-radius: 10px;
+            transition: background-color 0.3s;
         }
-        .turma-grid strong { font-size: 13px; color: #555; }
-        .turma-grid label { font-weight: 600; color: #333; }
+        .turma-grid:hover {
+            background-color: var(--background-light);
+        }
+        .turma-grid strong { font-size: 13px; color: #555; font-weight: 600; }
+        .turma-grid label { font-weight: 600; color: var(--text-dark); }
         .turma-grid input { padding: 8px; font-size: 14px; text-align: center; }
-        .turma-meta, .turma-result { font-weight: bold; text-align: center; }
-        .turma-meta { color: #ef6c00; }
-        .turma-result { color: #00796b; }
+        .turma-meta, .turma-result { font-weight: 600; text-align: center; }
+        .turma-meta { color: var(--accent-color); }
+        .turma-result { color: var(--primary-dark); }
 
-        /* Estilos para Configurações */
-        .settings-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 15px; align-items: flex-end; }
-        .delete-btn {
-            background-color: #e53935; color: white; border: none; border-radius: 5px; cursor: pointer; padding: 5px 8px; font-size: 12px;
+        .settings-form { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr;
+            gap: 20px; 
+            align-items: flex-end;
         }
-        .turma-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-radius: 5px; }
-        .turma-list-item:nth-child(odd) { background-color: #f9f9f9; }
-
-        /* Estilos para Ranking */
-        .ranking-container {
-            margin-top: 25px;
-            padding: 20px;
-            background-color: #fff;
+        .settings-form .action-btn {
+            grid-column: 1 / -1;
+        }
+        .delete-btn {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
             border-radius: 8px;
+            cursor: pointer;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .delete-btn:hover {
+            background: #e53935;
+            color: white;
+        }
+        .turma-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; }
+        .turma-list-item:nth-child(odd) { background-color: var(--background-light); }
+        .color-dot {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            margin-right: 12px;
+            vertical-align: middle;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        #color-selector-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background-color: var(--background-light);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .color-swatch {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        .color-swatch.selected {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 3px var(--primary-color);
+        }
+
+        .ranking-container {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: #fff;
+            border-radius: 15px;
             border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 20px var(--shadow-color);
         }
         .ranking-container h3 {
             margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
+            margin-bottom: 20px;
+            font-size: 22px;
             text-align: center;
-            color: #333;
+            color: var(--text-dark);
+            font-weight: 600;
         }
-        .ranking-container ol {
-            list-style-type: none;
-            padding-left: 0;
-            margin: 0;
-        }
+        .ranking-container ol { list-style-type: none; padding-left: 0; margin: 0; }
         .ranking-container li {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 12px 15px;
+            border-radius: 10px;
             font-size: 16px;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            transition: background-color 0.3s;
         }
         .ranking-container li:nth-child(odd) {
-            background-color: #f7f7f7;
+            background-color: var(--background-light);
         }
         .ranking-container li strong {
-            color: #333;
+            color: var(--text-dark);
+            font-weight: 600;
         }
-        .ranking-container li:nth-child(1)::before { content: '🥇 '; font-size: 20px; }
-        .ranking-container li:nth-child(2)::before { content: '🥈 '; font-size: 20px; }
-        .ranking-container li:nth-child(3)::before { content: '🥉 '; font-size: 20px; }
+        .ranking-container li span {
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        .ranking-container li:nth-child(1) { background: linear-gradient(to right, #fffde7, #fff3e0); border: 1px solid #ffca28; }
+        .ranking-container li:nth-child(2) { background: linear-gradient(to right, #f5f5f5, #eeeeee); border: 1px solid #bdbdbd; }
+        .ranking-container li:nth-child(3) { background: linear-gradient(to right, #fbe9e7, #ffccbc); border: 1px solid #ff8a65; }
+
+        .ranking-container li:nth-child(1)::before { content: '🥇 '; font-size: 22px; }
+        .ranking-container li:nth-child(2)::before { content: '🥈 '; font-size: 22px; }
+        .ranking-container li:nth-child(3)::before { content: '🥉 '; font-size: 22px; }
         .ranking-container li:not(:nth-child(1)):not(:nth-child(2)):not(:nth-child(3))::before {
             content: attr(data-rank)'. ';
-            font-weight: bold;
+            font-weight: 600;
             min-width: 25px;
+            color: #777;
         }
     </style>
 </head>
 <body>
 
 <div class="calculator-container">
+    <div class="app-header">
+        <h1>Sistema de Metas</h1>
+        <button id="settings-btn" title="Configurações e Turmas">⚙️</button>
+    </div>
     <div class="tabs">
-        <button class="tab-link active" data-tab="settings">⚙️ Configurações & Turmas</button>
-        <button class="tab-link" data-tab="ensinoMedio">ENSINO MÉDIO</button>
+        <button class="tab-link active" data-tab="ensinoMedio">ENSINO MÉDIO</button>
         <button class="tab-link" data-tab="ei2Manha">E.I. ao 2° ANO (M)</button>
         <button class="tab-link" data-tab="ei2Tarde">E.I. ao 2° ANO (T)</button>
         <button class="tab-link" data-tab="ef1Manha">E.F. I (M)</button>
@@ -194,8 +334,8 @@
         <button class="tab-link" data-tab="ef2Tarde">E.F. II (T)</button>
     </div>
 
-    <!-- Aba de Configurações -->
-    <div id="settings" class="tab-content active">
+    <!-- Painel de Configurações -->
+    <div id="settings">
         <h2>Configurações Gerais e Gerenciamento de Turmas</h2>
         <div class="form-group">
             <label for="metaPerStudent">Meta de itens por aluno:</label>
@@ -216,16 +356,18 @@
                 <label for="newTurmaStudents">N° de Alunos</label>
                 <input type="number" id="newTurmaStudents" placeholder="Ex: 25">
             </div>
-            <button id="addTurmaBtn" class="action-btn" style="padding: 12px; font-size: 16px;">Adicionar</button>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Cor da Turma</label>
+                <div id="color-selector-container"></div>
+                <input type="hidden" id="selectedColor">
+            </div>
+            <button id="addTurmaBtn" class="action-btn">Adicionar Turma</button>
         </div>
-
-        <div id="turmasListContainer">
-            <!-- Listas de turmas por seção serão inseridas aqui -->
-        </div>
+        <div id="turmasListContainer"></div>
     </div>
 
     <!-- Abas de Segmentos -->
-    <div id="ensinoMedio" class="tab-content"></div>
+    <div id="ensinoMedio" class="tab-content active"></div>
     <div id="ei2Manha" class="tab-content"></div>
     <div id="ei2Tarde" class="tab-content"></div>
     <div id="ef1Manha" class="tab-content"></div>
@@ -239,6 +381,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.calculator-container');
     const localStorageKey = 'metasEscolaresApp';
+    const settingsPanel = document.getElementById('settings');
+    const settingsBtn = document.getElementById('settings-btn');
 
     const segments = {
         ensinoMedio: 'ENSINO MÉDIO',
@@ -250,7 +394,22 @@ document.addEventListener('DOMContentLoaded', () => {
         ef2Tarde: 'E.F. II (TARDE)'
     };
 
-    // Estrutura de dados padrão
+    const colorPalettes = {
+        // Azul, Verde, Amarelo, Vermelho, Laranja, Roxo, Branco, Preto
+        full: ['#3498db', '#2ecc71', '#f1c40f', '#e74c3c', '#e67e22', '#9b59b6', '#ecf0f1', '#34495e'],
+        basic: ['#3498db', '#2ecc71', '#f1c40f'], // Azul, Verde, Amarelo
+    };
+    
+    const segmentPalettes = {
+        ensinoMedio: colorPalettes.full.slice(0, 7), // Todas menos preto
+        ei2Manha: colorPalettes.basic,
+        ei2Tarde: colorPalettes.basic,
+        ef1Manha: colorPalettes.basic,
+        ef1Tarde: colorPalettes.basic,
+        ef2Manha: colorPalettes.full,
+        ef2Tarde: colorPalettes.full,
+    };
+
     const createDefaultState = () => ({
         metaPerStudent: 5,
         turmas: {
@@ -261,11 +420,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let state = JSON.parse(localStorage.getItem(localStorageKey)) || createDefaultState();
 
-    // --- FUNÇÕES DE RENDERIZAÇÃO ---
     const formatResult = (num) => num.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
     function renderAll() {
         renderSettings();
+        updateColorSelector();
         for (const segmentId in segments) {
             renderSegmentTab(segmentId);
         }
@@ -280,13 +439,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const listContainer = document.getElementById('turmasListContainer');
         listContainer.innerHTML = '';
         for (const segmentId in segments) {
-            if (state.turmas[segmentId].length > 0) {
+            if (state.turmas[segmentId] && state.turmas[segmentId].length > 0) {
                 const sectionDiv = document.createElement('div');
                 sectionDiv.innerHTML = `<h3>${segments[segmentId]}</h3>`;
                 state.turmas[segmentId].forEach(turma => {
                     sectionDiv.innerHTML += `
                         <div class="turma-list-item">
-                            <span><strong>${turma.name}</strong> - ${turma.students} alunos</span>
+                            <span>
+                                <span class="color-dot" style="background-color: ${turma.color || '#ccc'};"></span>
+                                <strong>${turma.name}</strong> - ${turma.students} alunos
+                            </span>
                             <button class="delete-btn" data-segment="${segmentId}" data-turma="${turma.name}">Excluir</button>
                         </div>
                     `;
@@ -303,9 +465,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = `<h2>Metas - ${segments[segmentId]}</h2>`;
         const turmas = state.turmas[segmentId];
 
-        if (turmas.length > 0) {
+        if (turmas && turmas.length > 0) {
             html += `
-                <div class="turma-grid">
+                <div class="turma-grid" style="border:none; padding-left:0; background: none;">
                     <strong>Turma</strong>
                     <strong>Alunos</strong>
                     <strong>Itens Arrecadados</strong>
@@ -317,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const meta = turma.students * state.metaPerStudent;
                 const progresso = meta > 0 ? (turma.collected / meta) * 100 : 0;
                 html += `
-                    <div class="turma-grid">
+                    <div class="turma-grid" style="border-left-color: ${turma.color || '#ccc'};">
                         <label>${turma.name}</label>
                         <div class="turma-students">${turma.students}</div>
                         <input type="number" class="turma-collected-input" data-segment="${segmentId}" data-turma="${turma.name}" value="${turma.collected || ''}" placeholder="Qtd.">
@@ -326,16 +488,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             });
-            html += `<button class="calculate-btn" data-calc="${segmentId}">Calcular Progresso</button>`;
+            html += `<button class="calculate-btn" data-calc="${segmentId}">Calcular Progresso & Atualizar Ranking</button>`;
             html += `<div class="result" id="${segmentId}-total-result"></div>`;
-            html += `<div class="ranking-container" id="${segmentId}-ranking"></div>`; // Placeholder para o ranking
+            html += `<div class="ranking-container" id="${segmentId}-ranking"></div>`;
         } else {
-            html += `<p>Nenhuma turma adicionada para esta seção. Adicione turmas na aba "⚙️ Configurações & Turmas".</p>`;
+            html += `<p>Nenhuma turma adicionada para esta seção. Adicione turmas no painel de <strong>Configurações</strong> (⚙️).</p>`;
         }
         tabContent.innerHTML = html;
     }
+    
+    function updateColorSelector() {
+        const segmentId = document.getElementById('newTurmaSegment').value;
+        const palette = segmentPalettes[segmentId] || colorPalettes.full;
+        const container = document.getElementById('color-selector-container');
+        const selectedColorInput = document.getElementById('selectedColor');
+        
+        container.innerHTML = '';
+        palette.forEach((color, index) => {
+            const swatch = document.createElement('span');
+            swatch.className = 'color-swatch';
+            swatch.style.backgroundColor = color;
+            swatch.dataset.color = color;
+            if (index === 0) {
+                swatch.classList.add('selected');
+                selectedColorInput.value = color;
+            }
+            container.appendChild(swatch);
+        });
+    }
 
-    // --- FUNÇÕES DE LÓGICA E ESTADO ---
     function saveState() {
         localStorage.setItem(localStorageKey, JSON.stringify(state));
     }
@@ -344,6 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const segmentId = document.getElementById('newTurmaSegment').value;
         const name = document.getElementById('newTurmaName').value.trim().toUpperCase();
         const students = parseInt(document.getElementById('newTurmaStudents').value, 10);
+        const color = document.getElementById('selectedColor').value;
 
         if (!name || isNaN(students) || students <= 0) {
             alert('Por favor, preencha o nome da turma e um número válido de alunos.');
@@ -355,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        state.turmas[segmentId].push({ name, students, collected: 0 });
+        state.turmas[segmentId].push({ name, students, collected: 0, color: color });
         saveState();
         renderAll();
 
@@ -375,16 +557,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalArrecadado = 0;
         let totalMeta = 0;
 
-        // 1. Atualiza o estado com os valores dos inputs
         state.turmas[segmentId].forEach(turma => {
             const input = document.querySelector(`.turma-collected-input[data-turma="${turma.name}"][data-segment="${segmentId}"]`);
             turma.collected = parseFloat(input.value) || 0;
         });
         
         saveState(); 
-        renderSegmentTab(segmentId); // Re-renderiza a aba para mostrar os percentuais individuais atualizados
+        renderSegmentTab(segmentId);
 
-        // 2. Calcula o total para o resultado geral da seção
         state.turmas[segmentId].forEach(turma => {
             totalArrecadado += turma.collected;
             totalMeta += turma.students * state.metaPerStudent;
@@ -398,7 +578,6 @@ document.addEventListener('DOMContentLoaded', () => {
             totalResultDiv.innerHTML = '';
         }
 
-        // 3. Gera e exibe o Ranking
         renderRanking(segmentId);
     }
 
@@ -406,23 +585,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const rankingContainer = document.getElementById(`${segmentId}-ranking`);
         if (!rankingContainer) return;
 
-        // Cria um array temporário com os dados para o ranking
         const rankingData = state.turmas[segmentId].map(turma => {
             const meta = turma.students * state.metaPerStudent;
             const percentage = meta > 0 ? (turma.collected / meta) * 100 : 0;
-            return { name: turma.name, percentage: percentage };
+            return { name: turma.name, percentage: percentage, color: turma.color };
         });
 
-        // Ordena o array da maior para a menor porcentagem
         rankingData.sort((a, b) => b.percentage - a.percentage);
 
-        // Gera o HTML do ranking
         let rankingHtml = '<h3>🏆 Ranking da Seção</h3>';
         if (rankingData.length > 0) {
             rankingHtml += '<ol>';
             rankingData.forEach((turma, index) => {
                 rankingHtml += `<li data-rank="${index + 1}">
-                                    <strong>${turma.name}</strong>
+                                    <div>
+                                        <span class="color-dot" style="background-color: ${turma.color || '#ccc'};"></span>
+                                        <strong>${turma.name}</strong>
+                                    </div>
                                     <span>${formatResult(turma.percentage)}%</span>
                                 </li>`;
             });
@@ -434,10 +613,35 @@ document.addEventListener('DOMContentLoaded', () => {
         rankingContainer.innerHTML = rankingHtml;
     }
 
+    function showSettings(show) {
+        if (show) {
+            container.querySelector('.tab-content.active')?.classList.remove('active');
+            container.querySelector('.tab-link.active')?.classList.remove('active');
+            settingsPanel.classList.add('active');
+            settingsBtn.classList.add('active');
+        } else {
+            settingsPanel.classList.remove('active');
+            settingsBtn.classList.remove('active');
+        }
+    }
+
     // --- EVENT LISTENERS ---
+    settingsBtn.addEventListener('click', () => {
+        const isSettingsActive = settingsPanel.classList.contains('active');
+        showSettings(!isSettingsActive);
+        if (isSettingsActive) {
+            const firstTabLink = document.querySelector('.tab-link');
+            if (firstTabLink) {
+                firstTabLink.classList.add('active');
+                document.querySelector(`#${firstTabLink.dataset.tab}`).classList.add('active');
+            }
+        }
+    });
+
     container.addEventListener('click', (event) => {
         const target = event.target;
         if (target.matches('.tab-link')) {
+            showSettings(false);
             container.querySelector('.tab-link.active')?.classList.remove('active');
             container.querySelector('.tab-content.active')?.classList.remove('active');
             target.classList.add('active');
@@ -449,8 +653,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target.matches('.calculate-btn')) {
             calculateSegmentProgress(target.dataset.calc);
         }
+        if (target.matches('.color-swatch')) {
+            container.querySelector('.color-swatch.selected')?.classList.remove('selected');
+            target.classList.add('selected');
+            document.getElementById('selectedColor').value = target.dataset.color;
+        }
     });
 
+    document.getElementById('newTurmaSegment').addEventListener('change', updateColorSelector);
     document.getElementById('addTurmaBtn').addEventListener('click', addTurma);
     document.getElementById('metaPerStudent').addEventListener('change', (e) => {
         state.metaPerStudent = parseFloat(e.target.value) || 1;
