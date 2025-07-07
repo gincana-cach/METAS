@@ -20,6 +20,8 @@
             --text-light: #e2e8f0;       /* Texto Principal (Claro) */
             --text-medium: #94a3b8;      /* Texto Secundário (Cinza) */
             --shadow-color: rgba(0, 0, 0, 0.25);
+            --success-color: #22c55e;
+            --error-color: #ef4444;
         }
 
         body {
@@ -168,6 +170,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            position: relative;
         }
         
         .calculate-btn, .action-btn {
@@ -187,7 +190,7 @@
             transform: translateY(-3px);
             box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
         }
-        .gemini-btn:disabled {
+        .calculate-btn:disabled, .action-btn:disabled, .gemini-btn:disabled {
             background: var(--surface-light);
             cursor: not-allowed;
             transform: none;
@@ -420,17 +423,52 @@
             font-size: 15px;
             color: var(--text-light);
         }
+        
+        /* Sistema de Notificação */
+        #notification-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .notification {
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease-out, fadeOut 0.5s ease-in 3.5s forwards;
+        }
+        .notification.success {
+            background-color: var(--success-color);
+        }
+        .notification.error {
+            background-color: var(--error-color);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateX(100%); }
+        }
     </style>
 </head>
 <body>
+
+<div id="notification-container"></div>
 
 <div class="calculator-container">
     <div class="app-header">
         <h1>Sistema de Metas</h1>
         <div class="header-buttons">
-            <button id="planning-btn" title="Planejamento da Gincana">💡</button>
-            <button id="logs-btn" title="Histórico de Movimentações">📜</button>
-            <button id="settings-btn" title="Configurações e Turmas">⚙️</button>
+            <button id="planning-btn" title="Planejamento da Gincana" aria-label="Planejamento da Gincana">💡</button>
+            <button id="logs-btn" title="Histórico de Movimentações" aria-label="Histórico de Movimentações">📜</button>
+            <button id="settings-btn" title="Configurações e Turmas" aria-label="Configurações e Turmas">⚙️</button>
         </div>
     </div>
     <div class="tabs">
@@ -463,7 +501,7 @@
             </div>
             <div class="form-group">
                 <label for="newTurmaStudents">N° de Alunos</label>
-                <input type="number" id="newTurmaStudents" placeholder="Ex: 25">
+                <input type="number" id="newTurmaStudents" placeholder="Ex: 25" min="1">
             </div>
             <div class="form-group" style="grid-column: 1 / -1;">
                 <label>Cor da Turma</label>
@@ -512,18 +550,11 @@
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, serverTimestamp, orderBy, increment } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyDPMrqtnEK3aA4oiwb9-ZZE0N0QILkTFUE",
-        authDomain: "gincana-e9365.firebaseapp.com",
-        projectId: "gincana-e9365",
-        storageBucket: "gincana-e9365.appspot.com",
-        messagingSenderId: "787308941174",
-        appId: "1:787308941174:web:33bb2a6af174819b69f457",
-        measurementId: "G-MRF99415VZ"
-    };
+    // Firebase configuration provided by the environment
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
@@ -538,6 +569,7 @@
     const logsBtn = document.getElementById('logs-btn');
     const planningPanel = document.getElementById('planning-panel');
     const planningBtn = document.getElementById('planning-btn');
+    const notificationContainer = document.getElementById('notification-container');
 
     // --- Local State (for UI logic) ---
     let localState = {
@@ -574,18 +606,64 @@
 
     // --- Firestore References ---
     const getRefs = (userId) => {
-        // Using a simpler path for standalone deployment
-        const basePath = `/gincanas/${userId}`;
+        const basePath = `/artifacts/${appId}/users/${userId}`;
         return {
-            configDoc: doc(db, basePath, 'config'),
+            configDoc: doc(db, basePath, 'config/appState'),
             turmasCol: collection(db, basePath, 'turmas'),
             logsCol: collection(db, basePath, 'logs')
         };
     };
 
-    // --- Render Functions ---
-    const formatResult = (num) => num.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+    // --- UI Module ---
+    const ui = {
+        showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            notificationContainer.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        },
+        setButtonLoading(button, isLoading, originalText = '') {
+            if (isLoading) {
+                button.disabled = true;
+                button.dataset.originalText = button.textContent;
+                button.innerHTML = `<span class="spinner"></span> Carregando...`;
+            } else {
+                button.disabled = false;
+                button.innerHTML = button.dataset.originalText || originalText;
+            }
+        },
+        formatResult: (num) => num.toLocaleString('pt-BR', { maximumFractionDigits: 2 }),
+        showPanel(panelToShow) {
+            const allPanels = [settingsPanel, logsPanel, planningPanel, ...document.querySelectorAll('.tab-content')];
+            const allButtons = [settingsBtn, logsBtn, planningBtn, ...document.querySelectorAll('.tab-link')];
+            
+            allPanels.forEach(p => p.classList.remove('active'));
+            allButtons.forEach(b => b.classList.remove('active'));
 
+            if (panelToShow === 'settings') {
+                settingsPanel.classList.add('active');
+                settingsBtn.classList.add('active');
+            } else if (panelToShow === 'logs') {
+                logsPanel.classList.add('active');
+                logsBtn.classList.add('active');
+            } else if (panelToShow === 'planning') {
+                planningPanel.classList.add('active');
+                planningBtn.classList.add('active');
+            } else { 
+                const tabLink = document.querySelector(`.tab-link[data-tab="${panelToShow}"]`);
+                const tabContent = document.getElementById(panelToShow);
+                if (tabLink && tabContent) {
+                    tabLink.classList.add('active');
+                    tabContent.classList.add('active');
+                }
+            }
+        }
+    };
+
+    // --- Render Functions ---
     function renderAll() {
         renderSettings();
         updateColorSelector();
@@ -608,7 +686,7 @@
         const listContainer = document.getElementById('turmasListContainer');
         listContainer.innerHTML = '';
         for (const segmentId in segments) {
-            const turmasInSection = Object.values(localState.turmas).filter(t => t.segmentId === segmentId);
+            const turmasInSection = Object.values(localState.turmas).filter(t => t.segmentId === segmentId).sort((a,b) => a.name.localeCompare(b.name));
             if (turmasInSection.length > 0) {
                 const sectionDiv = document.createElement('div');
                 sectionDiv.innerHTML = `<h3>${segments[segmentId]}</h3>`;
@@ -633,7 +711,7 @@
         if (!tabContent) return;
 
         let html = `<h2>Metas - ${segments[segmentId]}</h2>`;
-        const turmas = Object.values(localState.turmas).filter(t => t.segmentId === segmentId);
+        const turmas = Object.values(localState.turmas).filter(t => t.segmentId === segmentId).sort((a,b) => a.name.localeCompare(b.name));
 
         if (turmas && turmas.length > 0) {
             html += `
@@ -649,16 +727,16 @@
                 const meta = turma.students * localState.metaPerStudent;
                 const progresso = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
                 html += `
-                    <div class="turma-grid" style="border-left-color: ${turma.color || '#ccc'};">
-                        <label>${turma.name}</label>
+                    <div class="turma-grid" style="border-left-color: ${turma.color || '#ccc'};" data-turma-id="${turma.id}">
+                        <label for="add-items-${turma.id}">${turma.name}</label>
                         <div class="turma-students">${turma.students}</div>
                         <div class="add-items-wrapper">
                             <span class="current-total">${turma.collected || 0}</span>
-                            <input type="number" class="add-items-input" placeholder="+" min="1">
+                            <input type="number" id="add-items-${turma.id}" class="add-items-input" placeholder="+" min="1">
                             <button class="add-items-btn" data-id="${turma.id}" title="Adicionar itens">+</button>
                         </div>
-                        <div class="turma-meta">${formatResult(meta)}</div>
-                        <div class="turma-result">${formatResult(progresso)}%</div>
+                        <div class="turma-meta">${ui.formatResult(meta)}</div>
+                        <div class="turma-result">${ui.formatResult(progresso)}%</div>
                     </div>
                 `;
             });
@@ -671,6 +749,20 @@
             html += `<p>Nenhuma turma adicionada para esta seção. Adicione turmas no painel de <strong>Configurações</strong> (⚙️).</p>`;
         }
         tabContent.innerHTML = html;
+    }
+
+    function updateTurmaUI(turmaId) {
+        const turma = localState.turmas[turmaId];
+        if (!turma) return;
+
+        const turmaRow = document.querySelector(`.turma-grid[data-turma-id="${turmaId}"]`);
+        if (!turmaRow) return;
+
+        const meta = turma.students * localState.metaPerStudent;
+        const progresso = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
+
+        turmaRow.querySelector('.current-total').textContent = turma.collected || 0;
+        turmaRow.querySelector('.turma-result').textContent = `${ui.formatResult(progresso)}%`;
     }
     
     function updateColorSelector() {
@@ -702,7 +794,7 @@
         }
         logsList.innerHTML = localState.logs.map(log => `
             <li class="log-item">
-                <span class="log-timestamp">${new Date(log.timestamp.seconds * 1000).toLocaleString('pt-BR')}</span>
+                <span class="log-timestamp">${new Date(log.timestamp?.seconds * 1000).toLocaleString('pt-BR')}</span>
                 <span class="log-message">${log.message}</span>
             </li>
         `).join('');
@@ -719,12 +811,14 @@
             });
         } catch (e) {
             console.error("Erro ao adicionar log: ", e);
+            ui.showNotification('Falha ao registrar a ação no histórico.', 'error');
         }
     }
 
     async function addTurma() {
         if (!localState.userId) return;
-        const { turmasCol } = getRefs(localState.userId);
+        const addBtn = document.getElementById('addTurmaBtn');
+        ui.setButtonLoading(addBtn, true);
 
         const segmentId = document.getElementById('newTurmaSegment').value;
         const name = document.getElementById('newTurmaName').value.trim().toUpperCase();
@@ -732,21 +826,33 @@
         const color = document.getElementById('selectedColor').value;
 
         if (!name || isNaN(students) || students <= 0) {
-            alert('Por favor, preencha o nome da turma e um número válido de alunos.');
+            ui.showNotification('Por favor, preencha todos os campos corretamente.', 'error');
+            ui.setButtonLoading(addBtn, false);
             return;
         }
         
+        const turmaExists = Object.values(localState.turmas).some(t => t.segmentId === segmentId && t.name === name);
+        if (turmaExists) {
+            ui.showNotification('Já existe uma turma com este nome nesta seção.', 'error');
+            ui.setButtonLoading(addBtn, false);
+            return;
+        }
+
+        const { turmasCol } = getRefs(localState.userId);
         const newTurma = { name, students, color, segmentId, collected: 0 };
         
         try {
             await addDoc(turmasCol, newTurma);
             addLog(`Turma '${name}' adicionada à seção '${segments[segmentId]}'.`);
+            ui.showNotification(`Turma '${name}' adicionada com sucesso!`, 'success');
             
             document.getElementById('newTurmaName').value = '';
             document.getElementById('newTurmaStudents').value = '';
         } catch(e) {
             console.error("Erro ao adicionar turma: ", e);
-            alert("Não foi possível adicionar a turma. Tente novamente.");
+            ui.showNotification("Não foi possível adicionar a turma. Tente novamente.", 'error');
+        } finally {
+            ui.setButtonLoading(addBtn, false);
         }
     }
 
@@ -760,9 +866,10 @@
             try {
                 await deleteDoc(doc(turmasCol, turmaId));
                 addLog(`Turma '${turma.name}' excluída da seção '${segments[turma.segmentId]}'.`);
+                ui.showNotification(`Turma '${turma.name}' excluída.`, 'success');
             } catch(e) {
                 console.error("Erro ao excluir turma: ", e);
-                alert("Não foi possível excluir a turma. Tente novamente.");
+                ui.showNotification("Não foi possível excluir a turma.", 'error');
             }
         }
     }
@@ -773,16 +880,15 @@
         if(!turma) return;
 
         const { turmasCol } = getRefs(localState.userId);
-        const newTotal = (turma.collected || 0) + itemsToAdd;
-
+        
         try {
             await updateDoc(doc(turmasCol, turmaId), {
-                collected: newTotal
+                collected: increment(itemsToAdd)
             });
-            addLog(`${itemsToAdd} itens adicionados à turma '${turma.name}'. Total: ${newTotal}.`);
+            addLog(`${itemsToAdd} itens adicionados à turma '${turma.name}'.`);
         } catch (e) {
             console.error("Erro ao adicionar itens: ", e);
-            alert("Não foi possível adicionar os itens. Tente novamente.");
+            ui.showNotification("Não foi possível adicionar os itens.", 'error');
         }
     }
 
@@ -793,8 +899,10 @@
         try {
             await setDoc(configDoc, { metaPerStudent: newMeta }, { merge: true });
             addLog(`Meta por aluno alterada de ${oldValue} para ${newMeta}.`);
+            ui.showNotification('Meta por aluno atualizada com sucesso!', 'success');
         } catch (e) {
             console.error("Erro ao atualizar meta: ", e);
+            ui.showNotification('Falha ao atualizar a meta.', 'error');
         }
     }
 
@@ -809,6 +917,9 @@
                 setDoc(configDoc, { metaPerStudent: 5 });
             }
             renderAll();
+        }, (error) => {
+            console.error("Erro no listener de config: ", error);
+            ui.showNotification("Erro de conexão. Não foi possível carregar as configurações.", "error");
         });
 
         onSnapshot(query(turmasCol), (snapshot) => {
@@ -818,11 +929,17 @@
             });
             localState.turmas = turmas;
             renderAll();
+        }, (error) => {
+            console.error("Erro no listener de turmas: ", error);
+            ui.showNotification("Erro de conexão. Não foi possível carregar as turmas.", "error");
         });
 
         onSnapshot(query(logsCol, orderBy('timestamp', 'desc')), (snapshot) => {
             localState.logs = snapshot.docs.map(doc => doc.data());
             renderLogs();
+        }, (error) => {
+            console.error("Erro no listener de logs: ", error);
+            ui.showNotification("Erro de conexão. Não foi possível carregar o histórico.", "error");
         });
     }
 
@@ -841,7 +958,7 @@
         const totalResultDiv = document.getElementById(`${segmentId}-total-result`);
         if (totalMeta > 0) {
             const totalPercentage = (totalArrecadado / totalMeta) * 100;
-            totalResultDiv.innerHTML = `Progresso Total (${segments[segmentId]}): <b>${formatResult(totalPercentage)}%</b> <br>(${formatResult(totalArrecadado)} de ${formatResult(totalMeta)} itens)`;
+            totalResultDiv.innerHTML = `Progresso Total (${segments[segmentId]}): <b>${ui.formatResult(totalPercentage)}%</b> <br>(${ui.formatResult(totalArrecadado)} de ${ui.formatResult(totalMeta)} itens)`;
         } else {
             totalResultDiv.innerHTML = '';
         }
@@ -872,7 +989,7 @@
                                         <span class="color-dot" style="background-color: ${turma.color || '#ccc'};"></span>
                                         <strong>${turma.name}</strong>
                                     </div>
-                                    <span>${formatResult(turma.percentage)}%</span>
+                                    <span>${ui.formatResult(turma.percentage)}%</span>
                                 </li>`;
             });
             rankingHtml += '</ol>';
@@ -884,14 +1001,17 @@
     }
     
     async function callGemini(prompt, resultDiv, button) {
-        button.disabled = true;
+        ui.setButtonLoading(button, true);
         resultDiv.style.display = 'block';
         resultDiv.textContent = 'Gerando... ✨';
 
         try {
+            // SECURITY WARNING: This client-side API call is for demonstration purposes only.
+            // In a production application, this call should be made from a secure backend server
+            // to protect your API key.
             let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
             const payload = { contents: chatHistory };
-            const apiKey = ""; // Canvas will provide the key
+            const apiKey = ""; // This key is injected by the Canvas environment for demo purposes.
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             
             const response = await fetch(apiUrl, {
@@ -918,8 +1038,9 @@
         } catch (error) {
             console.error("Erro ao chamar a API do Gemini:", error);
             resultDiv.textContent = 'Não foi possível gerar a resposta. Tente novamente mais tarde.';
+            ui.showNotification('Falha ao contatar a IA.', 'error');
         } finally {
-            button.disabled = false;
+            ui.setButtonLoading(button, false);
         }
     }
 
@@ -946,40 +1067,11 @@
 
         const leadingTurma = rankingData.length > 0 ? rankingData[0] : { name: "Ninguém", percentage: 0 };
 
-        const prompt = `Gere uma mensagem curta, vibrante e motivacional (no máximo 3 frases) para uma gincana escolar de arrecadação de itens. A seção é '${segments[segmentId]}'. O progresso geral da seção é de ${formatResult(overallProgress)}%. A turma líder no momento é a '${leadingTurma.name}' com ${formatResult(leadingTurma.percentage)}% da sua meta atingida. Parabenize a turma líder e incentive todas as outras a continuarem se esforçando para alcançar o objetivo. Use uma linguagem animada e positiva.`;
+        const prompt = `Gere uma mensagem curta, vibrante e motivacional (no máximo 3 frases) para uma gincana escolar de arrecadação de itens. A seção é '${segments[segmentId]}'. O progresso geral da seção é de ${ui.formatResult(overallProgress)}%. A turma líder no momento é a '${leadingTurma.name}' com ${ui.formatResult(leadingTurma.percentage)}% da sua meta atingida. Parabenize a turma líder e incentive todas as outras a continuarem se esforçando para alcançar o objetivo. Use uma linguagem animada e positiva.`;
         
         const text = await callGemini(prompt, geminiResultDiv, geminiBtn);
         if (text) {
             addLog(`Mensagem de IA gerada para a seção '${segments[segmentId]}'.`);
-        }
-    }
-
-    function showPanel(panelToShow) {
-        settingsPanel.classList.remove('active');
-        logsPanel.classList.remove('active');
-        planningPanel.classList.remove('active');
-        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-        settingsBtn.classList.remove('active');
-        logsBtn.classList.remove('active');
-        planningBtn.classList.remove('active');
-        document.querySelectorAll('.tab-link').forEach(tl => tl.classList.remove('active'));
-
-        if (panelToShow === 'settings') {
-            settingsPanel.classList.add('active');
-            settingsBtn.classList.add('active');
-        } else if (panelToShow === 'logs') {
-            logsPanel.classList.add('active');
-            logsBtn.classList.add('active');
-        } else if (panelToShow === 'planning') {
-            planningPanel.classList.add('active');
-            planningBtn.classList.add('active');
-        } else { 
-            const tabLink = document.querySelector(`.tab-link[data-tab="${panelToShow}"]`);
-            const tabContent = document.getElementById(panelToShow);
-            if (tabLink && tabContent) {
-                tabLink.classList.add('active');
-                tabContent.classList.add('active');
-            }
         }
     }
 
@@ -988,7 +1080,7 @@
         const target = event.target;
         
         if (target.matches('.tab-link')) {
-            showPanel(target.dataset.tab);
+            ui.showPanel(target.dataset.tab);
         } else if (target.matches('.delete-btn')) {
             deleteTurma(target.dataset.id);
         } else if (target.matches('.calculate-btn')) {
@@ -1006,7 +1098,7 @@
             const itemsToAdd = parseInt(input.value, 10);
 
             if (isNaN(itemsToAdd) || itemsToAdd <= 0) {
-                alert('Por favor, insira um número positivo de itens para adicionar.');
+                ui.showNotification('Por favor, insira um número positivo de itens.', 'error');
                 input.value = '';
                 return;
             }
@@ -1018,17 +1110,17 @@
     // --- Panel Buttons ---
     settingsBtn.addEventListener('click', () => {
         const isSettingsActive = settingsPanel.classList.contains('active');
-        showPanel(isSettingsActive ? 'ensinoMedio' : 'settings');
+        ui.showPanel(isSettingsActive ? 'ensinoMedio' : 'settings');
     });
 
     logsBtn.addEventListener('click', () => {
         const isLogsActive = logsPanel.classList.contains('active');
-        showPanel(isLogsActive ? 'ensinoMedio' : 'logs');
+        ui.showPanel(isLogsActive ? 'ensinoMedio' : 'logs');
     });
 
     planningBtn.addEventListener('click', () => {
         const isPlanningActive = planningPanel.classList.contains('active');
-        showPanel(isPlanningActive ? 'ensinoMedio' : 'planning');
+        ui.showPanel(isPlanningActive ? 'ensinoMedio' : 'planning');
     });
     
     // --- Form Buttons ---
@@ -1068,6 +1160,7 @@
         } else {
             signInAnonymously(auth).catch(error => {
                 console.error("Erro na autenticação anónima:", error);
+                ui.showNotification('Falha na autenticação com o servidor.', 'error');
             });
         }
     });
