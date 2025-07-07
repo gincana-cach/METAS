@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gerenciamento de Metas Escolares com Ranking</title>
+    <title>Sistema de Gerenciamento de Metas Escolares com Ranking e Logs</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -56,7 +56,11 @@
             font-size: 22px;
             font-weight: 600;
         }
-        #settings-btn {
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        #settings-btn, #logs-btn {
             background: rgba(255, 255, 255, 0.1);
             border: none;
             color: white;
@@ -70,11 +74,11 @@
             justify-content: center;
             transition: background-color 0.3s, transform 0.3s;
         }
-        #settings-btn:hover {
+        #settings-btn:hover, #logs-btn:hover {
             background-color: rgba(255, 255, 255, 0.2);
-            transform: rotate(45deg);
+            transform: scale(1.1);
         }
-        #settings-btn.active {
+        #settings-btn.active, #logs-btn.active {
             background-color: white;
             color: var(--primary-color);
         }
@@ -116,13 +120,13 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        /* Conteúdo das abas e painel de config */
-        .tab-content, #settings {
+        /* Conteúdo das abas e painéis */
+        .tab-content, #settings, #logs-panel {
             display: none;
             padding: 30px 35px;
             animation: fadeIn 0.5s ease-out;
         }
-        .tab-content.active, #settings.active { display: block; }
+        .tab-content.active, #settings.active, #logs-panel.active { display: block; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
@@ -315,6 +319,34 @@
             min-width: 25px;
             color: #777;
         }
+
+        /* NOVO: Estilos para o Painel de Logs */
+        #logs-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 15px;
+        }
+        .log-item:last-child {
+            border-bottom: none;
+        }
+        .log-timestamp {
+            font-size: 13px;
+            color: #888;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .log-message {
+            font-size: 15px;
+            color: #555;
+        }
     </style>
 </head>
 <body>
@@ -322,7 +354,10 @@
 <div class="calculator-container">
     <div class="app-header">
         <h1>Sistema de Metas</h1>
-        <button id="settings-btn" title="Configurações e Turmas">⚙️</button>
+        <div class="header-buttons">
+            <button id="logs-btn" title="Histórico de Movimentações">📜</button>
+            <button id="settings-btn" title="Configurações e Turmas">⚙️</button>
+        </div>
     </div>
     <div class="tabs">
         <button class="tab-link active" data-tab="ensinoMedio">ENSINO MÉDIO</button>
@@ -366,6 +401,12 @@
         <div id="turmasListContainer"></div>
     </div>
 
+    <!-- NOVO: Painel de Logs -->
+    <div id="logs-panel">
+        <h2>Histórico de Movimentações</h2>
+        <ul id="logs-list"></ul>
+    </div>
+
     <!-- Abas de Segmentos -->
     <div id="ensinoMedio" class="tab-content active"></div>
     <div id="ei2Manha" class="tab-content"></div>
@@ -383,6 +424,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const localStorageKey = 'metasEscolaresApp';
     const settingsPanel = document.getElementById('settings');
     const settingsBtn = document.getElementById('settings-btn');
+    const logsPanel = document.getElementById('logs-panel');
+    const logsBtn = document.getElementById('logs-btn');
 
     const segments = {
         ensinoMedio: 'ENSINO MÉDIO',
@@ -395,13 +438,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const colorPalettes = {
-        // Azul, Verde, Amarelo, Vermelho, Laranja, Roxo, Branco, Preto
         full: ['#3498db', '#2ecc71', '#f1c40f', '#e74c3c', '#e67e22', '#9b59b6', '#ecf0f1', '#34495e'],
-        basic: ['#3498db', '#2ecc71', '#f1c40f'], // Azul, Verde, Amarelo
+        basic: ['#3498db', '#2ecc71', '#f1c40f'],
     };
     
     const segmentPalettes = {
-        ensinoMedio: colorPalettes.full.slice(0, 7), // Todas menos preto
+        ensinoMedio: colorPalettes.full.slice(0, 7),
         ei2Manha: colorPalettes.basic,
         ei2Tarde: colorPalettes.basic,
         ef1Manha: colorPalettes.basic,
@@ -415,7 +457,8 @@ document.addEventListener('DOMContentLoaded', () => {
         turmas: {
             ensinoMedio: [], ei2Manha: [], ei2Tarde: [],
             ef1Manha: [], ef1Tarde: [], ef2Manha: [], ef2Tarde: []
-        }
+        },
+        logs: []
     });
 
     let state = JSON.parse(localStorage.getItem(localStorageKey)) || createDefaultState();
@@ -425,6 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAll() {
         renderSettings();
         updateColorSelector();
+        renderLogs();
         for (const segmentId in segments) {
             renderSegmentTab(segmentId);
         }
@@ -517,6 +561,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function renderLogs() {
+        const logsList = document.getElementById('logs-list');
+        if (!logsList) return;
+        if (state.logs.length === 0) {
+            logsList.innerHTML = '<li class="log-item">Nenhuma movimentação registrada.</li>';
+            return;
+        }
+        logsList.innerHTML = state.logs.map(log => `
+            <li class="log-item">
+                <span class="log-timestamp">${log.timestamp}</span>
+                <span class="log-message">${log.message}</span>
+            </li>
+        `).join('');
+    }
+
+    function addLog(message) {
+        const timestamp = new Date().toLocaleString('pt-BR', { 
+            day: '2-digit', month: '2-digit', year: 'numeric', 
+            hour: '2-digit', minute: '2-digit', second: '2-digit' 
+        });
+        state.logs.unshift({ timestamp, message }); // Adiciona no início para manter a ordem decrescente
+        saveState();
+        renderLogs();
+    }
+
     function saveState() {
         localStorage.setItem(localStorageKey, JSON.stringify(state));
     }
@@ -538,6 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         state.turmas[segmentId].push({ name, students, collected: 0, color: color });
+        addLog(`Turma '${name}' adicionada à seção '${segments[segmentId]}'.`);
         saveState();
         renderAll();
 
@@ -548,6 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function deleteTurma(segmentId, turmaName) {
         if (confirm(`Tem certeza que deseja excluir a turma ${turmaName}?`)) {
             state.turmas[segmentId] = state.turmas[segmentId].filter(t => t.name !== turmaName);
+            addLog(`Turma '${turmaName}' excluída da seção '${segments[segmentId]}'.`);
             saveState();
             renderAll();
         }
@@ -559,7 +630,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.turmas[segmentId].forEach(turma => {
             const input = document.querySelector(`.turma-collected-input[data-turma="${turma.name}"][data-segment="${segmentId}"]`);
-            turma.collected = parseFloat(input.value) || 0;
+            const newCollected = parseFloat(input.value) || 0;
+            if (newCollected !== turma.collected) {
+                addLog(`Arrecadação da turma '${turma.name}' atualizada de ${turma.collected} para ${newCollected} itens.`);
+                turma.collected = newCollected;
+            }
         });
         
         saveState(); 
@@ -613,39 +688,47 @@ document.addEventListener('DOMContentLoaded', () => {
         rankingContainer.innerHTML = rankingHtml;
     }
 
-    function showSettings(show) {
-        if (show) {
-            container.querySelector('.tab-content.active')?.classList.remove('active');
-            container.querySelector('.tab-link.active')?.classList.remove('active');
+    function showPanel(panelToShow) {
+        // Hide all panels and tabs
+        settingsPanel.classList.remove('active');
+        logsPanel.classList.remove('active');
+        document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        // Deactivate all buttons
+        settingsBtn.classList.remove('active');
+        logsBtn.classList.remove('active');
+        document.querySelectorAll('.tab-link').forEach(tl => tl.classList.remove('active'));
+
+        if (panelToShow === 'settings') {
             settingsPanel.classList.add('active');
             settingsBtn.classList.add('active');
-        } else {
-            settingsPanel.classList.remove('active');
-            settingsBtn.classList.remove('active');
+        } else if (panelToShow === 'logs') {
+            logsPanel.classList.add('active');
+            logsBtn.classList.add('active');
+        } else { // It's a tab
+            const tabLink = document.querySelector(`.tab-link[data-tab="${panelToShow}"]`);
+            const tabContent = document.getElementById(panelToShow);
+            if (tabLink && tabContent) {
+                tabLink.classList.add('active');
+                tabContent.classList.add('active');
+            }
         }
     }
 
     // --- EVENT LISTENERS ---
     settingsBtn.addEventListener('click', () => {
         const isSettingsActive = settingsPanel.classList.contains('active');
-        showSettings(!isSettingsActive);
-        if (isSettingsActive) {
-            const firstTabLink = document.querySelector('.tab-link');
-            if (firstTabLink) {
-                firstTabLink.classList.add('active');
-                document.querySelector(`#${firstTabLink.dataset.tab}`).classList.add('active');
-            }
-        }
+        showPanel(isSettingsActive ? 'ensinoMedio' : 'settings');
+    });
+
+    logsBtn.addEventListener('click', () => {
+        const isLogsActive = logsPanel.classList.contains('active');
+        showPanel(isLogsActive ? 'ensinoMedio' : 'logs');
     });
 
     container.addEventListener('click', (event) => {
         const target = event.target;
         if (target.matches('.tab-link')) {
-            showSettings(false);
-            container.querySelector('.tab-link.active')?.classList.remove('active');
-            container.querySelector('.tab-content.active')?.classList.remove('active');
-            target.classList.add('active');
-            container.querySelector(`#${target.dataset.tab}`).classList.add('active');
+            showPanel(target.dataset.tab);
         }
         if (target.matches('.delete-btn')) {
             deleteTurma(target.dataset.segment, target.dataset.turma);
@@ -663,9 +746,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('newTurmaSegment').addEventListener('change', updateColorSelector);
     document.getElementById('addTurmaBtn').addEventListener('click', addTurma);
     document.getElementById('metaPerStudent').addEventListener('change', (e) => {
-        state.metaPerStudent = parseFloat(e.target.value) || 1;
-        saveState();
-        renderAll();
+        const oldValue = state.metaPerStudent;
+        const newValue = parseFloat(e.target.value) || 1;
+        if (newValue !== oldValue) {
+            state.metaPerStudent = newValue;
+            addLog(`Meta por aluno alterada de ${oldValue} para ${newValue}.`);
+            saveState();
+            renderAll();
+        }
     });
     
     // --- INICIALIZAÇÃO ---
