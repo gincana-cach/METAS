@@ -3,16 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gerenciamento de Metas com Banco de Dados</title>
+    <title>Sistema de Gerenciamento de Metas (Armazenamento Local)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDK (versão de compatibilidade para uso sem módulos) -->
-    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore-compat.js"></script>
-
     <style>
         /* Estilos gerais com tema Dark Blue */
         :root {
@@ -519,14 +514,7 @@
 
 <script>
 (function() { // IIFE para encapsular o código e evitar poluição do escopo global
-    // Firebase configuration provided by the environment
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const localStorageKey = 'gincanaMetasApp';
 
     // --- DOM Elements ---
     const container = document.querySelector('.calculator-container');
@@ -537,12 +525,13 @@
     const notificationContainer = document.getElementById('notification-container');
 
     // --- Local State (for UI logic) ---
-    let localState = {
+    const createDefaultState = () => ({
         metaPerStudent: 5,
-        turmas: {},
-        logs: [],
-        userId: null
-    };
+        turmas: {}, // Agora um objeto para fácil acesso por ID
+        logs: []
+    });
+
+    let state = JSON.parse(localStorage.getItem(localStorageKey)) || createDefaultState();
 
     const segments = {
         ensinoMedio: 'ENSINO MÉDIO',
@@ -567,16 +556,6 @@
         ef1Tarde: colorPalettes.basic,
         ef2Manha: colorPalettes.full,
         ef2Tarde: colorPalettes.full,
-    };
-
-    // --- Firestore References ---
-    const getRefs = (userId) => {
-        const basePath = `/artifacts/${appId}/users/${userId}`;
-        return {
-            configDoc: db.doc(`${basePath}/config/appState`),
-            turmasCol: db.collection(`${basePath}/turmas`),
-            logsCol: db.collection(`${basePath}/logs`)
-        };
     };
 
     // --- UI Module ---
@@ -625,6 +604,18 @@
         }
     };
 
+    // --- Data Logic ---
+    function saveState() {
+        localStorage.setItem(localStorageKey, JSON.stringify(state));
+    }
+
+    function addLog(message) {
+        const timestamp = new Date().toLocaleString('pt-BR');
+        state.logs.unshift({ timestamp, message });
+        saveState();
+        renderLogs();
+    }
+
     // --- Render Functions ---
     function renderAll() {
         renderSettings();
@@ -636,7 +627,7 @@
     }
 
     function renderSettings() {
-        document.getElementById('metaPerStudent').value = localState.metaPerStudent;
+        document.getElementById('metaPerStudent').value = state.metaPerStudent;
         
         const select = document.getElementById('newTurmaSegment');
         const currentSegment = select.value;
@@ -648,7 +639,7 @@
         const listContainer = document.getElementById('turmasListContainer');
         listContainer.innerHTML = '';
         for (const segmentId in segments) {
-            const turmasInSection = Object.values(localState.turmas).filter(t => t.segmentId === segmentId).sort((a,b) => a.name.localeCompare(b.name));
+            const turmasInSection = Object.values(state.turmas).filter(t => t.segmentId === segmentId).sort((a,b) => a.name.localeCompare(b.name));
             if (turmasInSection.length > 0) {
                 const sectionDiv = document.createElement('div');
                 sectionDiv.innerHTML = `<h3>${segments[segmentId]}</h3>`;
@@ -673,7 +664,7 @@
         if (!tabContent) return;
 
         let html = `<h2>Metas - ${segments[segmentId]}</h2>`;
-        const turmas = Object.values(localState.turmas).filter(t => t.segmentId === segmentId).sort((a,b) => a.name.localeCompare(b.name));
+        const turmas = Object.values(state.turmas).filter(t => t.segmentId === segmentId).sort((a,b) => a.name.localeCompare(b.name));
 
         if (turmas && turmas.length > 0) {
             html += `
@@ -686,7 +677,7 @@
                 </div>
             `;
             turmas.forEach(turma => {
-                const meta = turma.students * localState.metaPerStudent;
+                const meta = turma.students * state.metaPerStudent;
                 const progresso = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
                 html += `
                     <div class="turma-grid" style="border-left-color: ${turma.color || '#ccc'};" data-turma-id="${turma.id}">
@@ -709,20 +700,6 @@
             html += `<p>Nenhuma turma adicionada para esta seção. Adicione turmas no painel de <strong>Configurações</strong> (⚙️).</p>`;
         }
         tabContent.innerHTML = html;
-    }
-
-    function updateTurmaUI(turmaId) {
-        const turma = localState.turmas[turmaId];
-        if (!turma) return;
-
-        const turmaRow = document.querySelector(`.turma-grid[data-turma-id="${turmaId}"]`);
-        if (!turmaRow) return;
-
-        const meta = turma.students * localState.metaPerStudent;
-        const progresso = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
-
-        turmaRow.querySelector('.current-total').textContent = turma.collected || 0;
-        turmaRow.querySelector('.turma-result').textContent = `${ui.formatResult(progresso)}%`;
     }
     
     function updateColorSelector() {
@@ -748,38 +725,20 @@
     function renderLogs() {
         const logsList = document.getElementById('logs-list');
         if (!logsList) return;
-        if (localState.logs.length === 0) {
+        if (state.logs.length === 0) {
             logsList.innerHTML = '<li class="log-item">Nenhuma movimentação registrada.</li>';
             return;
         }
-        logsList.innerHTML = localState.logs.map(log => `
+        logsList.innerHTML = state.logs.map(log => `
             <li class="log-item">
-                <span class="log-timestamp">${new Date(log.timestamp?.seconds * 1000).toLocaleString('pt-BR')}</span>
+                <span class="log-timestamp">${log.timestamp}</span>
                 <span class="log-message">${log.message}</span>
             </li>
         `).join('');
     }
 
-    // --- Firestore Logic ---
-    async function addLog(message) {
-        if (!localState.userId) return;
-        const { logsCol } = getRefs(localState.userId);
-        try {
-            await logsCol.add({
-                message,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        } catch (e) {
-            console.error("Erro ao adicionar log: ", e);
-            ui.showNotification('Falha ao registrar a ação no histórico.', 'error');
-        }
-    }
-
-    async function addTurma() {
-        if (!localState.userId) return;
-        const addBtn = document.getElementById('addTurmaBtn');
-        ui.setButtonLoading(addBtn, true);
-
+    // --- Core Logic & Event Handlers ---
+    function addTurma() {
         const segmentId = document.getElementById('newTurmaSegment').value;
         const name = document.getElementById('newTurmaName').value.trim().toUpperCase();
         const students = parseInt(document.getElementById('newTurmaStudents').value, 10);
@@ -787,132 +746,70 @@
 
         if (!name || isNaN(students) || students <= 0) {
             ui.showNotification('Por favor, preencha todos os campos corretamente.', 'error');
-            ui.setButtonLoading(addBtn, false);
             return;
         }
         
-        const turmaExists = Object.values(localState.turmas).some(t => t.segmentId === segmentId && t.name === name);
+        const turmaExists = Object.values(state.turmas).some(t => t.segmentId === segmentId && t.name === name);
         if (turmaExists) {
             ui.showNotification('Já existe uma turma com este nome nesta seção.', 'error');
-            ui.setButtonLoading(addBtn, false);
             return;
         }
-
-        const { turmasCol } = getRefs(localState.userId);
-        const newTurma = { name, students, color, segmentId, collected: 0 };
         
-        try {
-            await turmasCol.add(newTurma);
-            addLog(`Turma '${name}' adicionada à seção '${segments[segmentId]}'.`);
-            ui.showNotification(`Turma '${name}' adicionada com sucesso!`, 'success');
-            
-            document.getElementById('newTurmaName').value = '';
-            document.getElementById('newTurmaStudents').value = '';
-        } catch(e) {
-            console.error("Erro ao adicionar turma: ", e);
-            ui.showNotification("Não foi possível adicionar a turma. Tente novamente.", 'error');
-        } finally {
-            ui.setButtonLoading(addBtn, false);
-        }
+        const id = `turma_${Date.now()}`;
+        state.turmas[id] = { id, name, students, color, segmentId, collected: 0 };
+        addLog(`Turma '${name}' adicionada à seção '${segments[segmentId]}'.`);
+        saveState();
+        renderAll();
+        
+        document.getElementById('newTurmaSegment').value = segmentId;
+        updateColorSelector();
+        document.getElementById('newTurmaName').value = '';
+        document.getElementById('newTurmaStudents').value = '';
+        ui.showNotification(`Turma '${name}' adicionada com sucesso!`, 'success');
     }
 
-    async function deleteTurma(turmaId) {
-        if (!localState.userId) return;
-        const turma = localState.turmas[turmaId];
+    function deleteTurma(turmaId) {
+        const turma = state.turmas[turmaId];
         if (!turma) return;
 
         if (confirm(`Tem certeza que deseja excluir a turma ${turma.name}?`)) {
-            const { turmasCol } = getRefs(localState.userId);
-            try {
-                await turmasCol.doc(turmaId).delete();
-                addLog(`Turma '${turma.name}' excluída da seção '${segments[turma.segmentId]}'.`);
-                ui.showNotification(`Turma '${turma.name}' excluída.`, 'success');
-            } catch(e) {
-                console.error("Erro ao excluir turma: ", e);
-                ui.showNotification("Não foi possível excluir a turma.", 'error');
-            }
+            addLog(`Turma '${turma.name}' excluída da seção '${segments[turma.segmentId]}'.`);
+            delete state.turmas[turmaId];
+            saveState();
+            renderAll();
+            ui.showNotification(`Turma '${turma.name}' excluída.`, 'success');
         }
     }
     
-    async function addItemsToTurma(turmaId, itemsToAdd) {
-        if (!localState.userId || isNaN(itemsToAdd) || itemsToAdd <= 0) return;
-        const turma = localState.turmas[turmaId];
+    function addItemsToTurma(turmaId, itemsToAdd) {
+        const turma = state.turmas[turmaId];
         if(!turma) return;
-
-        const { turmasCol } = getRefs(localState.userId);
         
-        try {
-            await turmasCol.doc(turmaId).update({
-                collected: firebase.firestore.FieldValue.increment(itemsToAdd)
-            });
-            addLog(`${itemsToAdd} itens adicionados à turma '${turma.name}'.`);
-        } catch (e) {
-            console.error("Erro ao adicionar itens: ", e);
-            ui.showNotification("Não foi possível adicionar os itens.", 'error');
-        }
+        const oldValue = turma.collected || 0;
+        turma.collected = oldValue + itemsToAdd;
+        addLog(`${itemsToAdd} itens adicionados à turma '${turma.name}'. Total: ${turma.collected}.`);
+        saveState();
+        updateTurmaUI(turmaId);
     }
 
-    async function updateMeta(newMeta) {
-        if (!localState.userId) return;
-        const { configDoc } = getRefs(localState.userId);
-        const oldValue = localState.metaPerStudent;
-        try {
-            await configDoc.set({ metaPerStudent: newMeta }, { merge: true });
-            addLog(`Meta por aluno alterada de ${oldValue} para ${newMeta}.`);
-            ui.showNotification('Meta por aluno atualizada com sucesso!', 'success');
-        } catch (e) {
-            console.error("Erro ao atualizar meta: ", e);
-            ui.showNotification('Falha ao atualizar a meta.', 'error');
-        }
+    function updateMeta(newMeta) {
+        const oldValue = state.metaPerStudent;
+        state.metaPerStudent = newMeta;
+        addLog(`Meta por aluno alterada de ${oldValue} para ${newMeta}.`);
+        saveState();
+        renderAll();
+        ui.showNotification('Meta por aluno atualizada com sucesso!', 'success');
     }
 
-    // --- Real-time Listeners Setup ---
-    function setupListeners(userId) {
-        const { configDoc, turmasCol, logsCol } = getRefs(userId);
-
-        configDoc.onSnapshot((docSnap) => {
-            if (docSnap.exists) {
-                localState.metaPerStudent = docSnap.data().metaPerStudent || 5;
-            } else {
-                configDoc.set({ metaPerStudent: 5 });
-            }
-            renderAll();
-        }, (error) => {
-            console.error("Erro no listener de config: ", error);
-            ui.showNotification("Erro de conexão. Não foi possível carregar as configurações.", "error");
-        });
-
-        turmasCol.onSnapshot((snapshot) => {
-            const turmas = {};
-            snapshot.forEach(doc => {
-                turmas[doc.id] = { id: doc.id, ...doc.data() };
-            });
-            localState.turmas = turmas;
-            renderAll();
-        }, (error) => {
-            console.error("Erro no listener de turmas: ", error);
-            ui.showNotification("Erro de conexão. Não foi possível carregar as turmas.", "error");
-        });
-
-        logsCol.orderBy('timestamp', 'desc').onSnapshot((snapshot) => {
-            localState.logs = snapshot.docs.map(doc => doc.data());
-            renderLogs();
-        }, (error) => {
-            console.error("Erro no listener de logs: ", error);
-            ui.showNotification("Erro de conexão. Não foi possível carregar o histórico.", "error");
-        });
-    }
-
-    // --- UI Logic & Event Handlers ---
     function calculateSegmentProgress(segmentId) {
         let totalArrecadado = 0;
         let totalMeta = 0;
 
         addLog(`Recálculo e atualização do ranking para a seção '${segments[segmentId]}'.`);
         
-        Object.values(localState.turmas).filter(t => t.segmentId === segmentId).forEach(turma => {
+        Object.values(state.turmas).filter(t => t.segmentId === segmentId).forEach(turma => {
             totalArrecadado += turma.collected || 0;
-            totalMeta += turma.students * localState.metaPerStudent;
+            totalMeta += turma.students * state.metaPerStudent;
         });
 
         const totalResultDiv = document.getElementById(`${segmentId}-total-result`);
@@ -930,10 +827,10 @@
         const rankingContainer = document.getElementById(`${segmentId}-ranking`);
         if (!rankingContainer) return;
 
-        const rankingData = Object.values(localState.turmas)
+        const rankingData = Object.values(state.turmas)
             .filter(t => t.segmentId === segmentId)
             .map(turma => {
-                const meta = turma.students * localState.metaPerStudent;
+                const meta = turma.students * state.metaPerStudent;
                 const percentage = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
                 return { name: turma.name, percentage: percentage, color: turma.color };
             });
@@ -1010,19 +907,8 @@
         }
     });
     
-    // --- AUTHENTICATION & INITIALIZATION ---
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            console.log("Utilizador autenticado:", user.uid);
-            localState.userId = user.uid;
-            setupListeners(user.uid);
-        } else {
-            auth.signInAnonymously().catch(error => {
-                console.error("Erro na autenticação anónima:", error);
-                ui.showNotification('Falha na autenticação com o servidor.', 'error');
-            });
-        }
-    });
+    // --- INITIALIZATION ---
+    renderAll();
 })();
 </script>
 
