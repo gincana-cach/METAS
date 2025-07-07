@@ -8,21 +8,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Estilos gerais */
+        /* Estilos gerais com tema Dark Blue */
         :root {
-            --primary-color: #00796b;
-            --primary-dark: #00695c;
-            --secondary-color: #26a69a;
-            --accent-color: #ff9800;
-            --background-light: #f7f9fc;
-            --text-dark: #333;
-            --text-light: #f0f0f0;
-            --shadow-color: rgba(0, 0, 0, 0.1);
+            --primary-color: #2563eb;    /* Azul Principal */
+            --primary-dark: #1e3a8a;     /* Azul Escuro */
+            --secondary-color: #3b82f6;  /* Azul Secundário */
+            --accent-color: #f97316;     /* Laranja (para contraste) */
+            --background-dark: #0f172a;  /* Fundo Principal (Azul Ardósia) */
+            --surface-color: #1e293b;   /* Fundo dos Painéis */
+            --surface-light: #334155;  /* Fundo de Inputs */
+            --text-light: #e2e8f0;       /* Texto Principal (Claro) */
+            --text-medium: #94a3b8;      /* Texto Secundário (Cinza) */
+            --shadow-color: rgba(0, 0, 0, 0.25);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to right top, #e0f7fa, #f1f8e9);
+            background: var(--background-dark);
             margin: 0;
             padding: 20px;
             display: flex;
@@ -35,11 +37,11 @@
         .calculator-container {
             width: 100%;
             max-width: 800px;
-            background-color: #ffffff;
+            background-color: var(--surface-color);
             border-radius: 20px;
             box-shadow: 0 10px 40px var(--shadow-color);
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1px solid var(--surface-light);
         }
 
         /* Cabeçalho do App */
@@ -48,7 +50,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px 30px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(90deg, var(--primary-dark), var(--primary-color));
             color: var(--text-light);
         }
         .app-header h1 {
@@ -89,7 +91,7 @@
             flex-wrap: wrap; 
             background-color: var(--primary-dark);
             padding: 5px;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
         }
 
         .tab-link {
@@ -113,11 +115,11 @@
             color: white;
         }
         .tab-link.active {
-            background-color: var(--background-light);
-            color: var(--primary-dark);
+            background-color: var(--surface-color);
+            color: var(--text-light);
             font-weight: 600;
             transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
         /* Conteúdo das abas e painéis */
@@ -132,15 +134,17 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        h2 { margin-top: 0; color: var(--text-dark); font-size: 24px; font-weight: 600; }
-        h3 { margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 8px; color: var(--primary-color); font-weight: 600;}
+        h2 { margin-top: 0; color: var(--text-light); font-size: 24px; font-weight: 600; }
+        h3 { margin-top: 30px; border-bottom: 2px solid var(--surface-light); padding-bottom: 8px; color: var(--secondary-color); font-weight: 600;}
 
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #555; font-size: 15px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-medium); font-size: 15px; }
         .form-group input, .form-group select {
             width: 100%;
             padding: 12px 15px;
-            border: 1px solid #dcdcdc;
+            border: 1px solid var(--surface-light);
+            background-color: var(--surface-light);
+            color: var(--text-light);
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 16px;
@@ -149,8 +153,8 @@
         }
         .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 121, 107, 0.15);
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
 
         .calculate-btn, .action-btn {
@@ -165,46 +169,87 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 121, 107, 0.2);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
         }
         .calculate-btn:hover, .action-btn:hover { 
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 121, 107, 0.3);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
         }
 
         .result {
             margin-top: 25px;
             padding: 20px;
-            background: linear-gradient(to right, #e0f2f1, #e8f5e9);
-            border-left: 6px solid var(--primary-color);
+            background: var(--surface-light);
+            border-left: 6px solid var(--secondary-color);
             border-radius: 0 12px 12px 0;
             font-size: 18px;
             font-weight: 500;
             text-align: center;
-            color: var(--primary-dark);
+            color: var(--text-light);
         }
         
         .turma-grid {
             display: grid;
-            grid-template-columns: 1fr 0.8fr 1.2fr 1fr 1fr;
+            grid-template-columns: 1fr 0.8fr 1.5fr 1fr 1fr;
             gap: 15px;
             align-items: center;
             margin-bottom: 12px;
             padding: 10px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--surface-light);
             border-left: 6px solid #ccc;
             border-radius: 10px;
             transition: background-color 0.3s;
         }
         .turma-grid:hover {
-            background-color: var(--background-light);
+            background-color: rgba(255, 255, 255, 0.05);
         }
-        .turma-grid strong { font-size: 13px; color: #555; font-weight: 600; }
-        .turma-grid label { font-weight: 600; color: var(--text-dark); }
-        .turma-grid input { padding: 8px; font-size: 14px; text-align: center; }
+        .turma-grid strong { font-size: 13px; color: var(--text-medium); font-weight: 600; }
+        .turma-grid label { font-weight: 600; color: var(--text-light); }
         .turma-meta, .turma-result { font-weight: 600; text-align: center; }
         .turma-meta { color: var(--accent-color); }
-        .turma-result { color: var(--primary-dark); }
+        .turma-result { color: var(--secondary-color); }
+
+        .add-items-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        .current-total {
+            font-weight: 600;
+            font-size: 16px;
+            min-width: 40px;
+            text-align: center;
+            background-color: var(--surface-light);
+            color: var(--text-light);
+            padding: 8px;
+            border-radius: 8px;
+        }
+        .add-items-input {
+            width: 70px;
+            padding: 8px !important;
+            text-align: center;
+        }
+        .add-items-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            padding-bottom: 2px;
+        }
+        .add-items-btn:hover {
+            background: var(--secondary-color);
+            transform: scale(1.1);
+        }
 
         .settings-form { 
             display: grid; 
@@ -216,9 +261,9 @@
             grid-column: 1 / -1;
         }
         .delete-btn {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
+            background: #450a0a;
+            color: #fca5a5;
+            border: 1px solid #7f1d1d;
             border-radius: 8px;
             cursor: pointer;
             padding: 6px 10px;
@@ -227,11 +272,11 @@
             transition: all 0.2s ease;
         }
         .delete-btn:hover {
-            background: #e53935;
+            background: #7f1d1d;
             color: white;
         }
         .turma-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; }
-        .turma-list-item:nth-child(odd) { background-color: var(--background-light); }
+        .turma-list-item:nth-child(odd) { background-color: rgba(255, 255, 255, 0.05); }
         .color-dot {
             display: inline-block;
             width: 18px;
@@ -239,7 +284,7 @@
             border-radius: 50%;
             margin-right: 12px;
             vertical-align: middle;
-            border: 2px solid white;
+            border: 2px solid var(--surface-color);
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         
@@ -247,7 +292,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            background-color: var(--background-light);
+            background-color: var(--surface-light);
             padding: 10px;
             border-radius: 8px;
         }
@@ -256,7 +301,7 @@
             height: 32px;
             border-radius: 50%;
             cursor: pointer;
-            border: 2px solid #fff;
+            border: 2px solid var(--surface-light);
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
             transition: transform 0.2s, box-shadow 0.2s;
         }
@@ -265,15 +310,15 @@
         }
         .color-swatch.selected {
             transform: scale(1.15);
-            box-shadow: 0 0 0 3px var(--primary-color);
+            box-shadow: 0 0 0 3px var(--secondary-color);
         }
 
         .ranking-container {
             margin-top: 30px;
             padding: 25px;
-            background-color: #fff;
+            background-color: var(--surface-color);
             border-radius: 15px;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--surface-light);
             box-shadow: 0 4px 20px var(--shadow-color);
         }
         .ranking-container h3 {
@@ -281,7 +326,7 @@
             margin-bottom: 20px;
             font-size: 22px;
             text-align: center;
-            color: var(--text-dark);
+            color: var(--text-light);
             font-weight: 600;
         }
         .ranking-container ol { list-style-type: none; padding-left: 0; margin: 0; }
@@ -294,21 +339,22 @@
             font-size: 16px;
             margin-bottom: 8px;
             transition: background-color 0.3s;
+            border: 1px solid transparent;
         }
         .ranking-container li:nth-child(odd) {
-            background-color: var(--background-light);
+            background-color: rgba(255, 255, 255, 0.03);
         }
         .ranking-container li strong {
-            color: var(--text-dark);
+            color: var(--text-light);
             font-weight: 600;
         }
         .ranking-container li span {
             font-weight: 600;
-            color: var(--primary-dark);
+            color: var(--secondary-color);
         }
-        .ranking-container li:nth-child(1) { background: linear-gradient(to right, #fffde7, #fff3e0); border: 1px solid #ffca28; }
-        .ranking-container li:nth-child(2) { background: linear-gradient(to right, #f5f5f5, #eeeeee); border: 1px solid #bdbdbd; }
-        .ranking-container li:nth-child(3) { background: linear-gradient(to right, #fbe9e7, #ffccbc); border: 1px solid #ff8a65; }
+        .ranking-container li:nth-child(1) { background: linear-gradient(to right, #4338ca, #312e81); border-color: #6d28d9; }
+        .ranking-container li:nth-child(2) { background: linear-gradient(to right, #4b5563, #374151); border-color: #6b7280; }
+        .ranking-container li:nth-child(3) { background: linear-gradient(to right, #854d0e, #713f12); border-color: #a16207; }
 
         .ranking-container li:nth-child(1)::before { content: '🥇 '; font-size: 22px; }
         .ranking-container li:nth-child(2)::before { content: '🥈 '; font-size: 22px; }
@@ -317,10 +363,9 @@
             content: attr(data-rank)'. ';
             font-weight: 600;
             min-width: 25px;
-            color: #777;
+            color: var(--text-medium);
         }
 
-        /* NOVO: Estilos para o Painel de Logs */
         #logs-list {
             list-style: none;
             padding: 0;
@@ -330,7 +375,7 @@
         }
         .log-item {
             padding: 10px 15px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--surface-light);
             display: flex;
             gap: 15px;
         }
@@ -339,13 +384,13 @@
         }
         .log-timestamp {
             font-size: 13px;
-            color: #888;
+            color: var(--text-medium);
             font-weight: 500;
             white-space: nowrap;
         }
         .log-message {
             font-size: 15px;
-            color: #555;
+            color: var(--text-light);
         }
     </style>
 </head>
@@ -401,7 +446,7 @@
         <div id="turmasListContainer"></div>
     </div>
 
-    <!-- NOVO: Painel de Logs -->
+    <!-- Painel de Logs -->
     <div id="logs-panel">
         <h2>Histórico de Movimentações</h2>
         <ul id="logs-list"></ul>
@@ -478,7 +523,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('metaPerStudent').value = state.metaPerStudent;
         
         const select = document.getElementById('newTurmaSegment');
+        const currentSegment = select.value; // Salva o valor atual antes de recarregar
         select.innerHTML = Object.keys(segments).map(id => `<option value="${id}">${segments[id]}</option>`).join('');
+        if (currentSegment) {
+            select.value = currentSegment; // Restaura o valor
+        }
 
         const listContainer = document.getElementById('turmasListContainer');
         listContainer.innerHTML = '';
@@ -515,24 +564,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     <strong>Turma</strong>
                     <strong>Alunos</strong>
                     <strong>Itens Arrecadados</strong>
-                    <strong>Meta da Turma</strong>
+                    <strong>Meta</strong>
                     <strong>Progresso</strong>
                 </div>
             `;
             turmas.forEach(turma => {
                 const meta = turma.students * state.metaPerStudent;
-                const progresso = meta > 0 ? (turma.collected / meta) * 100 : 0;
+                const progresso = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
                 html += `
                     <div class="turma-grid" style="border-left-color: ${turma.color || '#ccc'};">
                         <label>${turma.name}</label>
                         <div class="turma-students">${turma.students}</div>
-                        <input type="number" class="turma-collected-input" data-segment="${segmentId}" data-turma="${turma.name}" value="${turma.collected || ''}" placeholder="Qtd.">
+                        <div class="add-items-wrapper">
+                            <span class="current-total">${turma.collected || 0}</span>
+                            <input type="number" class="add-items-input" placeholder="+" min="1">
+                            <button class="add-items-btn" data-segment="${segmentId}" data-turma="${turma.name}" title="Adicionar itens">+</button>
+                        </div>
                         <div class="turma-meta">${formatResult(meta)}</div>
                         <div class="turma-result">${formatResult(progresso)}%</div>
                     </div>
                 `;
             });
-            html += `<button class="calculate-btn" data-calc="${segmentId}">Calcular Progresso & Atualizar Ranking</button>`;
+            html += `<button class="calculate-btn" data-calc="${segmentId}">Atualizar Ranking e Totais</button>`;
             html += `<div class="result" id="${segmentId}-total-result"></div>`;
             html += `<div class="ranking-container" id="${segmentId}-ranking"></div>`;
         } else {
@@ -581,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
             day: '2-digit', month: '2-digit', year: 'numeric', 
             hour: '2-digit', minute: '2-digit', second: '2-digit' 
         });
-        state.logs.unshift({ timestamp, message }); // Adiciona no início para manter a ordem decrescente
+        state.logs.unshift({ timestamp, message });
         saveState();
         renderLogs();
     }
@@ -610,6 +663,10 @@ document.addEventListener('DOMContentLoaded', () => {
         addLog(`Turma '${name}' adicionada à seção '${segments[segmentId]}'.`);
         saveState();
         renderAll();
+        
+        // CORREÇÃO: Manter a seleção da seção
+        document.getElementById('newTurmaSegment').value = segmentId;
+        updateColorSelector();
 
         document.getElementById('newTurmaName').value = '';
         document.getElementById('newTurmaStudents').value = '';
@@ -628,20 +685,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalArrecadado = 0;
         let totalMeta = 0;
 
-        state.turmas[segmentId].forEach(turma => {
-            const input = document.querySelector(`.turma-collected-input[data-turma="${turma.name}"][data-segment="${segmentId}"]`);
-            const newCollected = parseFloat(input.value) || 0;
-            if (newCollected !== turma.collected) {
-                addLog(`Arrecadação da turma '${turma.name}' atualizada de ${turma.collected} para ${newCollected} itens.`);
-                turma.collected = newCollected;
-            }
-        });
+        addLog(`Recálculo e atualização do ranking para a seção '${segments[segmentId]}'.`);
         
-        saveState(); 
-        renderSegmentTab(segmentId);
-
         state.turmas[segmentId].forEach(turma => {
-            totalArrecadado += turma.collected;
+            totalArrecadado += turma.collected || 0;
             totalMeta += turma.students * state.metaPerStudent;
         });
 
@@ -662,7 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rankingData = state.turmas[segmentId].map(turma => {
             const meta = turma.students * state.metaPerStudent;
-            const percentage = meta > 0 ? (turma.collected / meta) * 100 : 0;
+            const percentage = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
             return { name: turma.name, percentage: percentage, color: turma.color };
         });
 
@@ -689,11 +736,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showPanel(panelToShow) {
-        // Hide all panels and tabs
         settingsPanel.classList.remove('active');
         logsPanel.classList.remove('active');
         document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-        // Deactivate all buttons
         settingsBtn.classList.remove('active');
         logsBtn.classList.remove('active');
         document.querySelectorAll('.tab-link').forEach(tl => tl.classList.remove('active'));
@@ -704,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (panelToShow === 'logs') {
             logsPanel.classList.add('active');
             logsBtn.classList.add('active');
-        } else { // It's a tab
+        } else { 
             const tabLink = document.querySelector(`.tab-link[data-tab="${panelToShow}"]`);
             const tabContent = document.getElementById(panelToShow);
             if (tabLink && tabContent) {
@@ -727,19 +772,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     container.addEventListener('click', (event) => {
         const target = event.target;
+        
         if (target.matches('.tab-link')) {
             showPanel(target.dataset.tab);
-        }
-        if (target.matches('.delete-btn')) {
+        } else if (target.matches('.delete-btn')) {
             deleteTurma(target.dataset.segment, target.dataset.turma);
-        }
-        if (target.matches('.calculate-btn')) {
+        } else if (target.matches('.calculate-btn')) {
             calculateSegmentProgress(target.dataset.calc);
-        }
-        if (target.matches('.color-swatch')) {
+        } else if (target.matches('.color-swatch')) {
             container.querySelector('.color-swatch.selected')?.classList.remove('selected');
             target.classList.add('selected');
             document.getElementById('selectedColor').value = target.dataset.color;
+        } else if (target.matches('.add-items-btn')) {
+            const segmentId = target.dataset.segment;
+            const turmaName = target.dataset.turma;
+            const wrapper = target.closest('.add-items-wrapper');
+            const input = wrapper.querySelector('.add-items-input');
+            const itemsToAdd = parseInt(input.value, 10);
+
+            if (isNaN(itemsToAdd) || itemsToAdd <= 0) {
+                alert('Por favor, insira um número positivo de itens para adicionar.');
+                input.value = '';
+                return;
+            }
+
+            const turma = state.turmas[segmentId].find(t => t.name === turmaName);
+            if (turma) {
+                const oldValue = turma.collected || 0;
+                turma.collected = oldValue + itemsToAdd;
+                addLog(`${itemsToAdd} itens adicionados à turma '${turmaName}'. Total: ${turma.collected}.`);
+                saveState();
+                renderSegmentTab(segmentId);
+            }
         }
     });
 
