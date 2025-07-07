@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gerenciamento de Metas Escolares com Ranking e Logs</title>
+    <title>Sistema de Gerenciamento de Metas com Banco de Dados</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -62,7 +62,7 @@
             display: flex;
             gap: 10px;
         }
-        #settings-btn, #logs-btn {
+        #settings-btn, #logs-btn, #planning-btn {
             background: rgba(255, 255, 255, 0.1);
             border: none;
             color: white;
@@ -76,11 +76,11 @@
             justify-content: center;
             transition: background-color 0.3s, transform 0.3s;
         }
-        #settings-btn:hover, #logs-btn:hover {
+        #settings-btn:hover, #logs-btn:hover, #planning-btn:hover {
             background-color: rgba(255, 255, 255, 0.2);
             transform: scale(1.1);
         }
-        #settings-btn.active, #logs-btn.active {
+        #settings-btn.active, #logs-btn.active, #planning-btn.active {
             background-color: white;
             color: var(--primary-color);
         }
@@ -123,12 +123,12 @@
         }
 
         /* Conteúdo das abas e painéis */
-        .tab-content, #settings, #logs-panel {
+        .tab-content, #settings, #logs-panel, #planning-panel {
             display: none;
             padding: 30px 35px;
             animation: fadeIn 0.5s ease-out;
         }
-        .tab-content.active, #settings.active, #logs-panel.active { display: block; }
+        .tab-content.active, #settings.active, #logs-panel.active, #planning-panel.active { display: block; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
@@ -157,11 +157,10 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
 
-        .calculate-btn, .action-btn {
+        .calculate-btn, .action-btn, .gemini-btn {
             width: 100%;
             padding: 15px;
             margin-top: 10px;
-            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
             color: white;
             border: none;
             border-radius: 10px;
@@ -169,25 +168,54 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+        }
+        
+        .calculate-btn, .action-btn {
+            background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
             box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
         }
         .calculate-btn:hover, .action-btn:hover { 
             transform: translateY(-3px);
             box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
         }
+        
+        .gemini-btn {
+            background: linear-gradient(45deg, var(--accent-color), #f59e0b);
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.2);
+        }
+        .gemini-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
+        }
+        .gemini-btn:disabled {
+            background: var(--surface-light);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
-        .result {
-            margin-top: 25px;
+        .result, .gemini-result {
+            margin-top: 20px;
             padding: 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .result {
             background: var(--surface-light);
             border-left: 6px solid var(--secondary-color);
-            border-radius: 0 12px 12px 0;
-            font-size: 18px;
-            font-weight: 500;
             text-align: center;
             color: var(--text-light);
         }
         
+        .gemini-result {
+            background: rgba(249, 115, 22, 0.1);
+            border-left: 6px solid var(--accent-color);
+            color: var(--text-light);
+            white-space: pre-wrap;
+        }
+
         .turma-grid {
             display: grid;
             grid-template-columns: 1fr 0.8fr 1.5fr 1fr 1fr;
@@ -400,6 +428,7 @@
     <div class="app-header">
         <h1>Sistema de Metas</h1>
         <div class="header-buttons">
+            <button id="planning-btn" title="Planejamento da Gincana">💡</button>
             <button id="logs-btn" title="Histórico de Movimentações">📜</button>
             <button id="settings-btn" title="Configurações e Turmas">⚙️</button>
         </div>
@@ -452,6 +481,21 @@
         <ul id="logs-list"></ul>
     </div>
 
+    <!-- Painel de Planejamento -->
+    <div id="planning-panel">
+        <h2>💡 Planejamento da Gincana</h2>
+        
+        <h3>Gerador de Temas</h3>
+        <p style="color: var(--text-medium);">Sem ideias para a próxima gincana? Deixe a IA ajudar!</p>
+        <button class="gemini-btn" id="generate-theme-btn">✨ Gerar 5 Temas Criativos</button>
+        <div class="gemini-result" id="gemini-theme-result" style="display:none;"></div>
+
+        <h3>Gerador de Prêmios</h3>
+        <p style="color: var(--text-medium);">Sugestões de prêmios divertidos e de baixo custo para a turma campeã.</p>
+        <button class="gemini-btn" id="generate-prize-btn">✨ Gerar 5 Ideias de Prêmios</button>
+        <div class="gemini-result" id="gemini-prize-result" style="display:none;"></div>
+    </div>
+
     <!-- Abas de Segmentos -->
     <div id="ensinoMedio" class="tab-content active"></div>
     <div id="ei2Manha" class="tab-content"></div>
@@ -463,14 +507,45 @@
 
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+<!-- Firebase SDK -->
+<script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, query, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyDPMrqtnEK3aA4oiwb9-ZZE0N0QILkTFUE",
+        authDomain: "gincana-e9365.firebaseapp.com",
+        projectId: "gincana-e9365",
+        storageBucket: "gincana-e9365.appspot.com",
+        messagingSenderId: "787308941174",
+        appId: "1:787308941174:web:33bb2a6af174819b69f457",
+        measurementId: "G-MRF99415VZ"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // --- DOM Elements ---
     const container = document.querySelector('.calculator-container');
-    const localStorageKey = 'metasEscolaresApp';
     const settingsPanel = document.getElementById('settings');
     const settingsBtn = document.getElementById('settings-btn');
     const logsPanel = document.getElementById('logs-panel');
     const logsBtn = document.getElementById('logs-btn');
+    const planningPanel = document.getElementById('planning-panel');
+    const planningBtn = document.getElementById('planning-btn');
+
+    // --- Local State (for UI logic) ---
+    let localState = {
+        metaPerStudent: 5,
+        turmas: {},
+        logs: [],
+        userId: null
+    };
 
     const segments = {
         ensinoMedio: 'ENSINO MÉDIO',
@@ -497,17 +572,18 @@ document.addEventListener('DOMContentLoaded', () => {
         ef2Tarde: colorPalettes.full,
     };
 
-    const createDefaultState = () => ({
-        metaPerStudent: 5,
-        turmas: {
-            ensinoMedio: [], ei2Manha: [], ei2Tarde: [],
-            ef1Manha: [], ef1Tarde: [], ef2Manha: [], ef2Tarde: []
-        },
-        logs: []
-    });
+    // --- Firestore References ---
+    const getRefs = (userId) => {
+        // Using a simpler path for standalone deployment
+        const basePath = `/gincanas/${userId}`;
+        return {
+            configDoc: doc(db, basePath, 'config'),
+            turmasCol: collection(db, basePath, 'turmas'),
+            logsCol: collection(db, basePath, 'logs')
+        };
+    };
 
-    let state = JSON.parse(localStorage.getItem(localStorageKey)) || createDefaultState();
-
+    // --- Render Functions ---
     const formatResult = (num) => num.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
     function renderAll() {
@@ -520,29 +596,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderSettings() {
-        document.getElementById('metaPerStudent').value = state.metaPerStudent;
+        document.getElementById('metaPerStudent').value = localState.metaPerStudent;
         
         const select = document.getElementById('newTurmaSegment');
-        const currentSegment = select.value; // Salva o valor atual antes de recarregar
+        const currentSegment = select.value;
         select.innerHTML = Object.keys(segments).map(id => `<option value="${id}">${segments[id]}</option>`).join('');
         if (currentSegment) {
-            select.value = currentSegment; // Restaura o valor
+            select.value = currentSegment;
         }
 
         const listContainer = document.getElementById('turmasListContainer');
         listContainer.innerHTML = '';
         for (const segmentId in segments) {
-            if (state.turmas[segmentId] && state.turmas[segmentId].length > 0) {
+            const turmasInSection = Object.values(localState.turmas).filter(t => t.segmentId === segmentId);
+            if (turmasInSection.length > 0) {
                 const sectionDiv = document.createElement('div');
                 sectionDiv.innerHTML = `<h3>${segments[segmentId]}</h3>`;
-                state.turmas[segmentId].forEach(turma => {
+                turmasInSection.forEach(turma => {
                     sectionDiv.innerHTML += `
                         <div class="turma-list-item">
                             <span>
                                 <span class="color-dot" style="background-color: ${turma.color || '#ccc'};"></span>
                                 <strong>${turma.name}</strong> - ${turma.students} alunos
                             </span>
-                            <button class="delete-btn" data-segment="${segmentId}" data-turma="${turma.name}">Excluir</button>
+                            <button class="delete-btn" data-id="${turma.id}">Excluir</button>
                         </div>
                     `;
                 });
@@ -556,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!tabContent) return;
 
         let html = `<h2>Metas - ${segments[segmentId]}</h2>`;
-        const turmas = state.turmas[segmentId];
+        const turmas = Object.values(localState.turmas).filter(t => t.segmentId === segmentId);
 
         if (turmas && turmas.length > 0) {
             html += `
@@ -569,7 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             turmas.forEach(turma => {
-                const meta = turma.students * state.metaPerStudent;
+                const meta = turma.students * localState.metaPerStudent;
                 const progresso = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
                 html += `
                     <div class="turma-grid" style="border-left-color: ${turma.color || '#ccc'};">
@@ -578,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="add-items-wrapper">
                             <span class="current-total">${turma.collected || 0}</span>
                             <input type="number" class="add-items-input" placeholder="+" min="1">
-                            <button class="add-items-btn" data-segment="${segmentId}" data-turma="${turma.name}" title="Adicionar itens">+</button>
+                            <button class="add-items-btn" data-id="${turma.id}" title="Adicionar itens">+</button>
                         </div>
                         <div class="turma-meta">${formatResult(meta)}</div>
                         <div class="turma-result">${formatResult(progresso)}%</div>
@@ -586,7 +663,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             });
             html += `<button class="calculate-btn" data-calc="${segmentId}">Atualizar Ranking e Totais</button>`;
+            html += `<button class="gemini-btn" data-segment="${segmentId}">✨ Gerar Mensagem de Incentivo</button>`;
             html += `<div class="result" id="${segmentId}-total-result"></div>`;
+            html += `<div class="gemini-result" id="${segmentId}-gemini-result" style="display:none;"></div>`;
             html += `<div class="ranking-container" id="${segmentId}-ranking"></div>`;
         } else {
             html += `<p>Nenhuma turma adicionada para esta seção. Adicione turmas no painel de <strong>Configurações</strong> (⚙️).</p>`;
@@ -617,33 +696,36 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderLogs() {
         const logsList = document.getElementById('logs-list');
         if (!logsList) return;
-        if (state.logs.length === 0) {
+        if (localState.logs.length === 0) {
             logsList.innerHTML = '<li class="log-item">Nenhuma movimentação registrada.</li>';
             return;
         }
-        logsList.innerHTML = state.logs.map(log => `
+        logsList.innerHTML = localState.logs.map(log => `
             <li class="log-item">
-                <span class="log-timestamp">${log.timestamp}</span>
+                <span class="log-timestamp">${new Date(log.timestamp.seconds * 1000).toLocaleString('pt-BR')}</span>
                 <span class="log-message">${log.message}</span>
             </li>
         `).join('');
     }
 
-    function addLog(message) {
-        const timestamp = new Date().toLocaleString('pt-BR', { 
-            day: '2-digit', month: '2-digit', year: 'numeric', 
-            hour: '2-digit', minute: '2-digit', second: '2-digit' 
-        });
-        state.logs.unshift({ timestamp, message });
-        saveState();
-        renderLogs();
+    // --- Firestore Logic ---
+    async function addLog(message) {
+        if (!localState.userId) return;
+        const { logsCol } = getRefs(localState.userId);
+        try {
+            await addDoc(logsCol, {
+                message,
+                timestamp: serverTimestamp()
+            });
+        } catch (e) {
+            console.error("Erro ao adicionar log: ", e);
+        }
     }
 
-    function saveState() {
-        localStorage.setItem(localStorageKey, JSON.stringify(state));
-    }
+    async function addTurma() {
+        if (!localState.userId) return;
+        const { turmasCol } = getRefs(localState.userId);
 
-    function addTurma() {
         const segmentId = document.getElementById('newTurmaSegment').value;
         const name = document.getElementById('newTurmaName').value.trim().toUpperCase();
         const students = parseInt(document.getElementById('newTurmaStudents').value, 10);
@@ -654,42 +736,106 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        if (state.turmas[segmentId].some(t => t.name === name)) {
-            alert('Já existe uma turma com este nome nesta seção.');
-            return;
-        }
-
-        state.turmas[segmentId].push({ name, students, collected: 0, color: color });
-        addLog(`Turma '${name}' adicionada à seção '${segments[segmentId]}'.`);
-        saveState();
-        renderAll();
+        const newTurma = { name, students, color, segmentId, collected: 0 };
         
-        // CORREÇÃO: Manter a seleção da seção
-        document.getElementById('newTurmaSegment').value = segmentId;
-        updateColorSelector();
-
-        document.getElementById('newTurmaName').value = '';
-        document.getElementById('newTurmaStudents').value = '';
-    }
-
-    function deleteTurma(segmentId, turmaName) {
-        if (confirm(`Tem certeza que deseja excluir a turma ${turmaName}?`)) {
-            state.turmas[segmentId] = state.turmas[segmentId].filter(t => t.name !== turmaName);
-            addLog(`Turma '${turmaName}' excluída da seção '${segments[segmentId]}'.`);
-            saveState();
-            renderAll();
+        try {
+            await addDoc(turmasCol, newTurma);
+            addLog(`Turma '${name}' adicionada à seção '${segments[segmentId]}'.`);
+            
+            document.getElementById('newTurmaName').value = '';
+            document.getElementById('newTurmaStudents').value = '';
+        } catch(e) {
+            console.error("Erro ao adicionar turma: ", e);
+            alert("Não foi possível adicionar a turma. Tente novamente.");
         }
     }
 
+    async function deleteTurma(turmaId) {
+        if (!localState.userId) return;
+        const turma = localState.turmas[turmaId];
+        if (!turma) return;
+
+        if (confirm(`Tem certeza que deseja excluir a turma ${turma.name}?`)) {
+            const { turmasCol } = getRefs(localState.userId);
+            try {
+                await deleteDoc(doc(turmasCol, turmaId));
+                addLog(`Turma '${turma.name}' excluída da seção '${segments[turma.segmentId]}'.`);
+            } catch(e) {
+                console.error("Erro ao excluir turma: ", e);
+                alert("Não foi possível excluir a turma. Tente novamente.");
+            }
+        }
+    }
+    
+    async function addItemsToTurma(turmaId, itemsToAdd) {
+        if (!localState.userId || isNaN(itemsToAdd) || itemsToAdd <= 0) return;
+        const turma = localState.turmas[turmaId];
+        if(!turma) return;
+
+        const { turmasCol } = getRefs(localState.userId);
+        const newTotal = (turma.collected || 0) + itemsToAdd;
+
+        try {
+            await updateDoc(doc(turmasCol, turmaId), {
+                collected: newTotal
+            });
+            addLog(`${itemsToAdd} itens adicionados à turma '${turma.name}'. Total: ${newTotal}.`);
+        } catch (e) {
+            console.error("Erro ao adicionar itens: ", e);
+            alert("Não foi possível adicionar os itens. Tente novamente.");
+        }
+    }
+
+    async function updateMeta(newMeta) {
+        if (!localState.userId) return;
+        const { configDoc } = getRefs(localState.userId);
+        const oldValue = localState.metaPerStudent;
+        try {
+            await setDoc(configDoc, { metaPerStudent: newMeta }, { merge: true });
+            addLog(`Meta por aluno alterada de ${oldValue} para ${newMeta}.`);
+        } catch (e) {
+            console.error("Erro ao atualizar meta: ", e);
+        }
+    }
+
+    // --- Real-time Listeners Setup ---
+    function setupListeners(userId) {
+        const { configDoc, turmasCol, logsCol } = getRefs(userId);
+
+        onSnapshot(configDoc, (docSnap) => {
+            if (docSnap.exists()) {
+                localState.metaPerStudent = docSnap.data().metaPerStudent || 5;
+            } else {
+                setDoc(configDoc, { metaPerStudent: 5 });
+            }
+            renderAll();
+        });
+
+        onSnapshot(query(turmasCol), (snapshot) => {
+            const turmas = {};
+            snapshot.forEach(doc => {
+                turmas[doc.id] = { id: doc.id, ...doc.data() };
+            });
+            localState.turmas = turmas;
+            renderAll();
+        });
+
+        onSnapshot(query(logsCol, orderBy('timestamp', 'desc')), (snapshot) => {
+            localState.logs = snapshot.docs.map(doc => doc.data());
+            renderLogs();
+        });
+    }
+
+    // --- UI Logic & Event Handlers ---
     function calculateSegmentProgress(segmentId) {
         let totalArrecadado = 0;
         let totalMeta = 0;
 
         addLog(`Recálculo e atualização do ranking para a seção '${segments[segmentId]}'.`);
         
-        state.turmas[segmentId].forEach(turma => {
+        Object.values(localState.turmas).filter(t => t.segmentId === segmentId).forEach(turma => {
             totalArrecadado += turma.collected || 0;
-            totalMeta += turma.students * state.metaPerStudent;
+            totalMeta += turma.students * localState.metaPerStudent;
         });
 
         const totalResultDiv = document.getElementById(`${segmentId}-total-result`);
@@ -707,11 +853,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const rankingContainer = document.getElementById(`${segmentId}-ranking`);
         if (!rankingContainer) return;
 
-        const rankingData = state.turmas[segmentId].map(turma => {
-            const meta = turma.students * state.metaPerStudent;
-            const percentage = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
-            return { name: turma.name, percentage: percentage, color: turma.color };
-        });
+        const rankingData = Object.values(localState.turmas)
+            .filter(t => t.segmentId === segmentId)
+            .map(turma => {
+                const meta = turma.students * localState.metaPerStudent;
+                const percentage = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
+                return { name: turma.name, percentage: percentage, color: turma.color };
+            });
 
         rankingData.sort((a, b) => b.percentage - a.percentage);
 
@@ -734,13 +882,86 @@ document.addEventListener('DOMContentLoaded', () => {
         
         rankingContainer.innerHTML = rankingHtml;
     }
+    
+    async function callGemini(prompt, resultDiv, button) {
+        button.disabled = true;
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = 'Gerando... ✨';
+
+        try {
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = ""; // Canvas will provide the key
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro na API: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                const text = result.candidates[0].content.parts[0].text;
+                resultDiv.textContent = text;
+                return text;
+            } else {
+                throw new Error("Resposta da API inválida.");
+            }
+        } catch (error) {
+            console.error("Erro ao chamar a API do Gemini:", error);
+            resultDiv.textContent = 'Não foi possível gerar a resposta. Tente novamente mais tarde.';
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function generateEncouragementMessage(segmentId) {
+        const geminiResultDiv = document.getElementById(`${segmentId}-gemini-result`);
+        const geminiBtn = container.querySelector(`.gemini-btn[data-segment="${segmentId}"]`);
+        
+        let totalCollected = 0;
+        let totalGoal = 0;
+        Object.values(localState.turmas).filter(t => t.segmentId === segmentId).forEach(turma => {
+            totalCollected += turma.collected || 0;
+            totalGoal += turma.students * localState.metaPerStudent;
+        });
+
+        const overallProgress = totalGoal > 0 ? (totalCollected / totalGoal) * 100 : 0;
+        
+        const rankingData = Object.values(localState.turmas)
+            .filter(t => t.segmentId === segmentId)
+            .map(turma => {
+                const meta = turma.students * localState.metaPerStudent;
+                const percentage = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
+                return { name: turma.name, percentage: percentage };
+            }).sort((a, b) => b.percentage - a.percentage);
+
+        const leadingTurma = rankingData.length > 0 ? rankingData[0] : { name: "Ninguém", percentage: 0 };
+
+        const prompt = `Gere uma mensagem curta, vibrante e motivacional (no máximo 3 frases) para uma gincana escolar de arrecadação de itens. A seção é '${segments[segmentId]}'. O progresso geral da seção é de ${formatResult(overallProgress)}%. A turma líder no momento é a '${leadingTurma.name}' com ${formatResult(leadingTurma.percentage)}% da sua meta atingida. Parabenize a turma líder e incentive todas as outras a continuarem se esforçando para alcançar o objetivo. Use uma linguagem animada e positiva.`;
+        
+        const text = await callGemini(prompt, geminiResultDiv, geminiBtn);
+        if (text) {
+            addLog(`Mensagem de IA gerada para a seção '${segments[segmentId]}'.`);
+        }
+    }
 
     function showPanel(panelToShow) {
         settingsPanel.classList.remove('active');
         logsPanel.classList.remove('active');
+        planningPanel.classList.remove('active');
         document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
         settingsBtn.classList.remove('active');
         logsBtn.classList.remove('active');
+        planningBtn.classList.remove('active');
         document.querySelectorAll('.tab-link').forEach(tl => tl.classList.remove('active'));
 
         if (panelToShow === 'settings') {
@@ -749,6 +970,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (panelToShow === 'logs') {
             logsPanel.classList.add('active');
             logsBtn.classList.add('active');
+        } else if (panelToShow === 'planning') {
+            planningPanel.classList.add('active');
+            planningBtn.classList.add('active');
         } else { 
             const tabLink = document.querySelector(`.tab-link[data-tab="${panelToShow}"]`);
             const tabContent = document.getElementById(panelToShow);
@@ -759,7 +983,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- EVENT LISTENERS ---
+    // --- Main Event Listener ---
+    container.addEventListener('click', (event) => {
+        const target = event.target;
+        
+        if (target.matches('.tab-link')) {
+            showPanel(target.dataset.tab);
+        } else if (target.matches('.delete-btn')) {
+            deleteTurma(target.dataset.id);
+        } else if (target.matches('.calculate-btn')) {
+            calculateSegmentProgress(target.dataset.calc);
+        } else if (target.matches('.gemini-btn[data-segment]')) {
+            generateEncouragementMessage(target.dataset.segment);
+        } else if (target.matches('.color-swatch')) {
+            container.querySelector('.color-swatch.selected')?.classList.remove('selected');
+            target.classList.add('selected');
+            document.getElementById('selectedColor').value = target.dataset.color;
+        } else if (target.matches('.add-items-btn')) {
+            const turmaId = target.dataset.id;
+            const wrapper = target.closest('.add-items-wrapper');
+            const input = wrapper.querySelector('.add-items-input');
+            const itemsToAdd = parseInt(input.value, 10);
+
+            if (isNaN(itemsToAdd) || itemsToAdd <= 0) {
+                alert('Por favor, insira um número positivo de itens para adicionar.');
+                input.value = '';
+                return;
+            }
+            addItemsToTurma(turmaId, itemsToAdd);
+            input.value = '';
+        }
+    });
+    
+    // --- Panel Buttons ---
     settingsBtn.addEventListener('click', () => {
         const isSettingsActive = settingsPanel.classList.contains('active');
         showPanel(isSettingsActive ? 'ensinoMedio' : 'settings');
@@ -770,59 +1026,51 @@ document.addEventListener('DOMContentLoaded', () => {
         showPanel(isLogsActive ? 'ensinoMedio' : 'logs');
     });
 
-    container.addEventListener('click', (event) => {
-        const target = event.target;
-        
-        if (target.matches('.tab-link')) {
-            showPanel(target.dataset.tab);
-        } else if (target.matches('.delete-btn')) {
-            deleteTurma(target.dataset.segment, target.dataset.turma);
-        } else if (target.matches('.calculate-btn')) {
-            calculateSegmentProgress(target.dataset.calc);
-        } else if (target.matches('.color-swatch')) {
-            container.querySelector('.color-swatch.selected')?.classList.remove('selected');
-            target.classList.add('selected');
-            document.getElementById('selectedColor').value = target.dataset.color;
-        } else if (target.matches('.add-items-btn')) {
-            const segmentId = target.dataset.segment;
-            const turmaName = target.dataset.turma;
-            const wrapper = target.closest('.add-items-wrapper');
-            const input = wrapper.querySelector('.add-items-input');
-            const itemsToAdd = parseInt(input.value, 10);
+    planningBtn.addEventListener('click', () => {
+        const isPlanningActive = planningPanel.classList.contains('active');
+        showPanel(isPlanningActive ? 'ensinoMedio' : 'planning');
+    });
+    
+    // --- Form Buttons ---
+    document.getElementById('generate-theme-btn').addEventListener('click', async (e) => {
+        const prompt = "Gere 5 temas criativos e engajantes para uma gincana escolar solidária. Os temas devem ser curtos e inspiradores. Apresente como uma lista numerada.";
+        const resultDiv = document.getElementById('gemini-theme-result');
+        const text = await callGemini(prompt, resultDiv, e.target);
+        if (text) {
+            addLog("Ideias de temas para gincana foram geradas pela IA.");
+        }
+    });
 
-            if (isNaN(itemsToAdd) || itemsToAdd <= 0) {
-                alert('Por favor, insira um número positivo de itens para adicionar.');
-                input.value = '';
-                return;
-            }
-
-            const turma = state.turmas[segmentId].find(t => t.name === turmaName);
-            if (turma) {
-                const oldValue = turma.collected || 0;
-                turma.collected = oldValue + itemsToAdd;
-                addLog(`${itemsToAdd} itens adicionados à turma '${turmaName}'. Total: ${turma.collected}.`);
-                saveState();
-                renderSegmentTab(segmentId);
-            }
+    document.getElementById('generate-prize-btn').addEventListener('click', async (e) => {
+        const prompt = "Gere 5 ideias de prêmios de baixo custo para a turma vencedora de uma gincana escolar. Os prêmios devem ser experiências divertidas ou privilégios, não itens caros. Apresente como uma lista numerada.";
+        const resultDiv = document.getElementById('gemini-prize-result');
+        const text = await callGemini(prompt, resultDiv, e.target);
+        if (text) {
+            addLog("Ideias de prêmios para gincana foram geradas pela IA.");
         }
     });
 
     document.getElementById('newTurmaSegment').addEventListener('change', updateColorSelector);
     document.getElementById('addTurmaBtn').addEventListener('click', addTurma);
     document.getElementById('metaPerStudent').addEventListener('change', (e) => {
-        const oldValue = state.metaPerStudent;
         const newValue = parseFloat(e.target.value) || 1;
-        if (newValue !== oldValue) {
-            state.metaPerStudent = newValue;
-            addLog(`Meta por aluno alterada de ${oldValue} para ${newValue}.`);
-            saveState();
-            renderAll();
+        if (newValue !== localState.metaPerStudent) {
+            updateMeta(newValue);
         }
     });
     
-    // --- INICIALIZAÇÃO ---
-    renderAll();
-});
+    // --- AUTHENTICATION & INITIALIZATION ---
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            console.log("Utilizador autenticado:", user.uid);
+            localState.userId = user.uid;
+            setupListeners(user.uid);
+        } else {
+            signInAnonymously(auth).catch(error => {
+                console.error("Erro na autenticação anónima:", error);
+            });
+        }
+    });
 </script>
 
 </body>
