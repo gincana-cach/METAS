@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gerenciamento de Metas (Armazenamento Local)</title>
+    <title>Sistema de Gerenciamento de Metas (Online)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
     <style>
         /* Estilos gerais com tema Dark Blue */
         :root {
-            --primary-color: #2563eb;    /* Azul Principal */
+            --primary-color: #2563eb;   /* Azul Principal */
             --primary-dark: #1e3a8a;     /* Azul Escuro */
             --secondary-color: #3b82f6;  /* Azul Secundário */
             --accent-color: #f97316;     /* Laranja (para contraste) */
@@ -19,10 +19,11 @@
             --surface-color: #1e293b;   /* Fundo dos Painéis */
             --surface-light: #334155;  /* Fundo de Inputs */
             --text-light: #e2e8f0;       /* Texto Principal (Claro) */
-            --text-medium: #94a3b8;      /* Texto Secundário (Cinza) */
+            --text-medium: #94a3b8;     /* Texto Secundário (Cinza) */
             --shadow-color: rgba(0, 0, 0, 0.25);
             --success-color: #22c55e;
             --error-color: #ef4444;
+            --warning-color: #d97706;
         }
 
         body {
@@ -160,7 +161,7 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
 
-        .calculate-btn, .action-btn {
+        .action-btn {
             width: 100%;
             padding: 15px;
             margin-top: 10px;
@@ -172,18 +173,14 @@
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
-        }
-        
-        .calculate-btn, .action-btn {
             background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
             box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
         }
-        .calculate-btn:hover, .action-btn:hover { 
+        .action-btn:hover { 
             transform: translateY(-3px);
             box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
         }
-        
-        .calculate-btn:disabled, .action-btn:disabled {
+        .action-btn:disabled {
             background: var(--surface-light);
             cursor: not-allowed;
             transform: none;
@@ -204,7 +201,7 @@
         
         .turma-grid {
             display: grid;
-            grid-template-columns: 1fr 0.8fr 1.5fr 1fr 1fr;
+            grid-template-columns: 1fr 0.8fr 1.8fr 1fr 1fr;
             gap: 15px;
             align-items: center;
             margin-bottom: 12px;
@@ -263,6 +260,24 @@
         .add-items-btn:hover {
             background: var(--secondary-color);
             transform: scale(1.1);
+        }
+
+        .zerar-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 12px;
+            height: 36px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 5px;
+        }
+        .zerar-btn:hover {
+            background: #d97706;
+            transform: scale(1.05);
         }
 
         .settings-form { 
@@ -439,18 +454,116 @@
             from { opacity: 1; }
             to { opacity: 0; transform: translateX(100%); }
         }
+
+        /* Modal de Confirmação */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        .modal-content p {
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 18px;
+            color: var(--text-light);
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .modal-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-btn-confirm {
+            background-color: var(--error-color);
+            color: white;
+        }
+        .modal-btn-confirm:hover {
+            filter: brightness(1.1);
+        }
+        .modal-btn-cancel {
+            background-color: var(--surface-light);
+            color: var(--text-light);
+        }
+        .modal-btn-cancel:hover {
+            background-color: var(--surface-light);
+            filter: brightness(0.9);
+        }
+
+        .segment-meta-group {
+            background-color: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            max-width: 300px;
+        }
+        .zerar-tudo-btn {
+            background: var(--warning-color);
+            margin-top: 20px;
+        }
+        .zerar-tudo-btn:hover {
+            background: #b45309;
+        }
+
     </style>
 </head>
 <body>
 
 <div id="notification-container"></div>
 
+<!-- Modal de Confirmação -->
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal-content">
+        <p id="confirm-modal-message">Tem certeza?</p>
+        <div class="modal-buttons">
+            <button id="modal-btn-cancel" class="modal-btn modal-btn-cancel">Cancelar</button>
+            <button id="modal-btn-confirm" class="modal-btn modal-btn-confirm">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+
 <div class="calculator-container">
     <div class="app-header">
         <h1>Sistema de Metas</h1>
         <div class="header-buttons">
             <button id="logs-btn" title="Histórico de Movimentações" aria-label="Histórico de Movimentações">📜</button>
-            <button id="settings-btn" title="Configurações e Turmas" aria-label="Configurações e Turmas">⚙️</button>
+            <button id="settings-btn" title="Configurações e Turmas" aria-label="Configurações e Turmas">⚙</button>
         </div>
     </div>
     <div class="tabs">
@@ -465,12 +578,7 @@
 
     <!-- Painel de Configurações -->
     <div id="settings">
-        <h2>Configurações Gerais e Gerenciamento de Turmas</h2>
-        <div class="form-group">
-            <label for="metaPerStudent">Meta de itens por aluno:</label>
-            <input type="number" id="metaPerStudent" value="5" min="1">
-        </div>
-        <hr>
+        <h2>Gerenciamento de Turmas</h2>
         <h3>Adicionar Nova Turma</h3>
         <div class="settings-form">
             <div class="form-group">
@@ -512,9 +620,13 @@
 
 </div>
 
-<script>
-(function() { // IIFE para encapsular o código e evitar poluição do escopo global
-    const localStorageKey = 'gincanaMetasApp';
+<script type="module">
+    // Import Firebase services from the CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const localStorageKey = 'gincanaMetasApp-offlineCache';
 
     // --- DOM Elements ---
     const container = document.querySelector('.calculator-container');
@@ -523,11 +635,32 @@
     const logsPanel = document.getElementById('logs-panel');
     const logsBtn = document.getElementById('logs-btn');
     const notificationContainer = document.getElementById('notification-container');
+    const confirmModal = document.getElementById('confirm-modal');
+    const confirmModalMessage = document.getElementById('confirm-modal-message');
+    const modalBtnConfirm = document.getElementById('modal-btn-confirm');
+    const modalBtnCancel = document.getElementById('modal-btn-cancel');
 
-    // --- Local State (for UI logic) ---
+    // --- Firebase Setup ---
+    let db, auth, userId, stateDocRef;
+    let isInitialLoad = true;
+    let resolveConfirmation; // To handle modal promise
+
+    // Get Firebase config and app ID from the global scope (provided by the environment)
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+    // --- State Management ---
     const createDefaultState = () => ({
-        metaPerStudent: 5,
-        turmas: {}, // Agora um objeto para fácil acesso por ID
+        metasPorSegmento: {
+            ensinoMedio: 5,
+            ei2Manha: 5,
+            ei2Tarde: 5,
+            ef1Manha: 5,
+            ef1Tarde: 5,
+            ef2Manha: 5,
+            ef2Tarde: 5
+        },
+        turmas: {},
         logs: []
     });
 
@@ -569,17 +702,6 @@
                 notification.remove();
             }, 4000);
         },
-        setButtonLoading(button, isLoading, originalText = '') {
-            if (isLoading) {
-                button.disabled = true;
-                button.dataset.originalText = button.textContent;
-                button.innerHTML = `<span class="spinner"></span> Carregando...`;
-            } else {
-                button.disabled = false;
-                button.innerHTML = button.dataset.originalText || originalText;
-            }
-        },
-        formatResult: (num) => num.toLocaleString('pt-BR', { maximumFractionDigits: 2 }),
         showPanel(panelToShow) {
             const allPanels = [settingsPanel, logsPanel, ...document.querySelectorAll('.tab-content')];
             const allButtons = [settingsBtn, logsBtn, ...document.querySelectorAll('.tab-link')];
@@ -601,19 +723,90 @@
                     tabContent.classList.add('active');
                 }
             }
-        }
+        },
+        showConfirmation(message) {
+            return new Promise((resolve) => {
+                confirmModalMessage.textContent = message;
+                confirmModal.classList.add('active');
+                resolveConfirmation = resolve;
+            });
+        },
+        hideConfirmation() {
+            confirmModal.classList.remove('active');
+        },
+        formatResult: (num) => num.toLocaleString('pt-BR', { maximumFractionDigits: 2 }),
     };
 
-    // --- Data Logic ---
-    function saveState() {
-        localStorage.setItem(localStorageKey, JSON.stringify(state));
+    // --- Data Logic (with Firestore and LocalStorage Fallback) ---
+    async function saveState() {
+        if (!stateDocRef) {
+            console.warn("Firebase não está pronto. Salvando no cache local.");
+            localStorage.setItem(localStorageKey, JSON.stringify(state));
+            ui.showNotification('Modo offline. Seus dados estão salvos no navegador.', 'error');
+            return;
+        }
+        try {
+            await setDoc(stateDocRef, state);
+            localStorage.removeItem(localStorageKey);
+        } catch (err) {
+            console.error("Erro ao salvar no Firestore. Usando cache local como fallback.", err);
+            localStorage.setItem(localStorageKey, JSON.stringify(state));
+            ui.showNotification('Falha de conexão. Dados salvos localmente.', 'error');
+        }
+    }
+    
+    function listenForStateChanges() {
+        if (!stateDocRef) return;
+        onSnapshot(stateDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const serverState = docSnap.data();
+                state = { ...createDefaultState(), ...serverState };
+                localStorage.removeItem(localStorageKey);
+                if (isInitialLoad) {
+                    ui.showNotification("Dados sincronizados com o servidor.", "success");
+                    isInitialLoad = false;
+                }
+            } else {
+                saveState();
+            }
+            renderAll();
+        }, (error) => {
+            console.error("Erro no listener do Firestore:", error);
+            ui.showNotification("Não foi possível sincronizar com o servidor. Verifique sua conexão.", "error");
+        });
+    }
+
+    async function setupFirebase() {
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    stateDocRef = doc(db, "artifacts", appId, "public/data/goals", "mainState");
+                    listenForStateChanges();
+                }
+            });
+            
+            const authToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            if (authToken) {
+                await signInWithCustomToken(auth, authToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) {
+            console.error("Falha na inicialização do Firebase:", error);
+            ui.showNotification("Não foi possível conectar à base de dados. Usando modo offline.", "error");
+        }
     }
 
     function addLog(message) {
         const timestamp = new Date().toLocaleString('pt-BR');
+        if(!state.logs) state.logs = [];
         state.logs.unshift({ timestamp, message });
         saveState();
-        renderLogs();
     }
 
     // --- Render Functions ---
@@ -623,18 +816,15 @@
         renderLogs();
         for (const segmentId in segments) {
             renderSegmentTab(segmentId);
+            calculateSegmentProgress(segmentId);
         }
     }
 
     function renderSettings() {
-        document.getElementById('metaPerStudent').value = state.metaPerStudent;
-        
         const select = document.getElementById('newTurmaSegment');
-        const currentSegment = select.value;
+        const currentSegment = select.value || Object.keys(segments)[0];
         select.innerHTML = Object.keys(segments).map(id => `<option value="${id}">${segments[id]}</option>`).join('');
-        if (currentSegment) {
-            select.value = currentSegment;
-        }
+        select.value = currentSegment;
 
         const listContainer = document.getElementById('turmasListContainer');
         listContainer.innerHTML = '';
@@ -663,7 +853,18 @@
         const tabContent = document.getElementById(segmentId);
         if (!tabContent) return;
 
+        const metaAtual = state.metasPorSegmento[segmentId] || 5;
         let html = `<h2>Metas - ${segments[segmentId]}</h2>`;
+
+        html += `
+            <div class="segment-meta-group">
+                <div class="form-group">
+                    <label for="meta-${segmentId}">Meta de itens por aluno na seção:</label>
+                    <input type="number" class="segment-meta-input" id="meta-${segmentId}" data-segment-id="${segmentId}" value="${metaAtual}" min="1">
+                </div>
+            </div>
+        `;
+
         const turmas = Object.values(state.turmas).filter(t => t.segmentId === segmentId).sort((a,b) => a.name.localeCompare(b.name));
 
         if (turmas && turmas.length > 0) {
@@ -677,7 +878,7 @@
                 </div>
             `;
             turmas.forEach(turma => {
-                const meta = turma.students * state.metaPerStudent;
+                const meta = turma.students * metaAtual;
                 const progresso = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
                 html += `
                     <div class="turma-grid" style="border-left-color: ${turma.color || '#ccc'};" data-turma-id="${turma.id}">
@@ -687,17 +888,19 @@
                             <span class="current-total">${turma.collected || 0}</span>
                             <input type="number" id="add-items-${turma.id}" class="add-items-input" placeholder="+" min="1">
                             <button class="add-items-btn" data-id="${turma.id}" title="Adicionar itens">+</button>
+                            <button class="zerar-btn" data-id="${turma.id}" title="Zerar itens">Zerar</button>
                         </div>
                         <div class="turma-meta">${ui.formatResult(meta)}</div>
                         <div class="turma-result">${ui.formatResult(progresso)}%</div>
                     </div>
                 `;
             });
-            html += `<button class="calculate-btn" data-calc="${segmentId}">Atualizar Ranking e Totais</button>`;
             html += `<div class="result" id="${segmentId}-total-result"></div>`;
             html += `<div class="ranking-container" id="${segmentId}-ranking"></div>`;
+            html += `<button class="zerar-tudo-btn action-btn" data-segment-id="${segmentId}">Zerar Tudo na Seção</button>`;
+
         } else {
-            html += `<p>Nenhuma turma adicionada para esta seção. Adicione turmas no painel de <strong>Configurações</strong> (⚙️).</p>`;
+            html += `<p>Nenhuma turma adicionada para esta seção. Adicione turmas no painel de <strong>Configurações</strong> (⚙).</p>`;
         }
         tabContent.innerHTML = html;
     }
@@ -725,7 +928,7 @@
     function renderLogs() {
         const logsList = document.getElementById('logs-list');
         if (!logsList) return;
-        if (state.logs.length === 0) {
+        if (!state.logs || state.logs.length === 0) {
             logsList.innerHTML = '<li class="log-item">Nenhuma movimentação registrada.</li>';
             return;
         }
@@ -759,7 +962,6 @@
         state.turmas[id] = { id, name, students, color, segmentId, collected: 0 };
         addLog(`Turma '${name}' adicionada à seção '${segments[segmentId]}'.`);
         saveState();
-        renderAll();
         
         document.getElementById('newTurmaSegment').value = segmentId;
         updateColorSelector();
@@ -768,15 +970,17 @@
         ui.showNotification(`Turma '${name}' adicionada com sucesso!`, 'success');
     }
 
-    function deleteTurma(turmaId) {
+    async function deleteTurma(turmaId) {
         const turma = state.turmas[turmaId];
         if (!turma) return;
 
-        if (confirm(`Tem certeza que deseja excluir a turma ${turma.name}?`)) {
+        const confirmed = await ui.showConfirmation(`Tem certeza que deseja excluir a turma ${turma.name}?`);
+        ui.hideConfirmation();
+
+        if (confirmed) {
             addLog(`Turma '${turma.name}' excluída da seção '${segments[turma.segmentId]}'.`);
             delete state.turmas[turmaId];
             saveState();
-            renderAll();
             ui.showNotification(`Turma '${turma.name}' excluída.`, 'success');
         }
     }
@@ -789,35 +993,67 @@
         turma.collected = oldValue + itemsToAdd;
         addLog(`${itemsToAdd} itens adicionados à turma '${turma.name}'. Total: ${turma.collected}.`);
         saveState();
-        updateTurmaUI(turmaId);
     }
 
-    function updateMeta(newMeta) {
-        const oldValue = state.metaPerStudent;
-        state.metaPerStudent = newMeta;
-        addLog(`Meta por aluno alterada de ${oldValue} para ${newMeta}.`);
+    async function resetItemsForTurma(turmaId) {
+        const turma = state.turmas[turmaId];
+        if(!turma) return;
+
+        const confirmed = await ui.showConfirmation(`Zerar itens da turma ${turma.name}?`);
+        ui.hideConfirmation();
+
+        if (confirmed) {
+            turma.collected = 0;
+            addLog(`Itens da turma '${turma.name}' foram zerados.`);
+            saveState();
+        }
+    }
+
+    async function resetAllItemsInSegment(segmentId) {
+        const confirmed = await ui.showConfirmation(`Tem certeza que deseja ZERAR TODOS os itens da seção ${segments[segmentId]}? Esta ação não pode ser desfeita.`);
+        ui.hideConfirmation();
+
+        if (confirmed) {
+            Object.values(state.turmas).forEach(turma => {
+                if (turma.segmentId === segmentId) {
+                    turma.collected = 0;
+                }
+            });
+            addLog(`Todos os itens da seção '${segments[segmentId]}' foram zerados.`);
+            saveState();
+            ui.showNotification(`Itens da seção '${segments[segmentId]}' zerados.`, 'success');
+        }
+    }
+
+    function updateMeta(segmentId, newMeta) {
+        if (!state.metasPorSegmento) {
+            state.metasPorSegmento = {};
+        }
+        const oldValue = state.metasPorSegmento[segmentId] || 5;
+        state.metasPorSegmento[segmentId] = newMeta;
+        addLog(`Meta para '${segments[segmentId]}' alterada de ${oldValue} para ${newMeta}.`);
         saveState();
-        renderAll();
-        ui.showNotification('Meta por aluno atualizada com sucesso!', 'success');
+        ui.showNotification('Meta da seção atualizada!', 'success');
     }
 
     function calculateSegmentProgress(segmentId) {
         let totalArrecadado = 0;
         let totalMeta = 0;
-
-        addLog(`Recálculo e atualização do ranking para a seção '${segments[segmentId]}'.`);
+        const metaAtual = state.metasPorSegmento[segmentId] || 5;
         
         Object.values(state.turmas).filter(t => t.segmentId === segmentId).forEach(turma => {
             totalArrecadado += turma.collected || 0;
-            totalMeta += turma.students * state.metaPerStudent;
+            totalMeta += turma.students * metaAtual;
         });
 
         const totalResultDiv = document.getElementById(`${segmentId}-total-result`);
-        if (totalMeta > 0) {
-            const totalPercentage = (totalArrecadado / totalMeta) * 100;
-            totalResultDiv.innerHTML = `Progresso Total (${segments[segmentId]}): <b>${ui.formatResult(totalPercentage)}%</b> <br>(${ui.formatResult(totalArrecadado)} de ${ui.formatResult(totalMeta)} itens)`;
-        } else {
-            totalResultDiv.innerHTML = '';
+        if (totalResultDiv) {
+            if (totalMeta > 0) {
+                const totalPercentage = (totalArrecadado / totalMeta) * 100;
+                totalResultDiv.innerHTML = `Progresso Total (${segments[segmentId]}): <b>${ui.formatResult(totalPercentage)}%</b> <br>(${ui.formatResult(totalArrecadado)} de ${ui.formatResult(totalMeta)} itens)`;
+            } else {
+                totalResultDiv.innerHTML = '';
+            }
         }
 
         renderRanking(segmentId);
@@ -826,11 +1062,12 @@
     function renderRanking(segmentId) {
         const rankingContainer = document.getElementById(`${segmentId}-ranking`);
         if (!rankingContainer) return;
+        const metaAtual = state.metasPorSegmento[segmentId] || 5;
 
         const rankingData = Object.values(state.turmas)
             .filter(t => t.segmentId === segmentId)
             .map(turma => {
-                const meta = turma.students * state.metaPerStudent;
+                const meta = turma.students * metaAtual;
                 const percentage = meta > 0 ? ((turma.collected || 0) / meta) * 100 : 0;
                 return { name: turma.name, percentage: percentage, color: turma.color };
             });
@@ -857,7 +1094,7 @@
         rankingContainer.innerHTML = rankingHtml;
     }
     
-    // --- Main Event Listener ---
+    // --- Main Event Listeners ---
     container.addEventListener('click', (event) => {
         const target = event.target;
         
@@ -865,8 +1102,10 @@
             ui.showPanel(target.dataset.tab);
         } else if (target.matches('.delete-btn')) {
             deleteTurma(target.dataset.id);
-        } else if (target.matches('.calculate-btn')) {
-            calculateSegmentProgress(target.dataset.calc);
+        } else if (target.matches('.zerar-btn')) {
+            resetItemsForTurma(target.dataset.id);
+        } else if (target.matches('.zerar-tudo-btn')) {
+            resetAllItemsInSegment(target.dataset.segmentId);
         } else if (target.matches('.color-swatch')) {
             container.querySelector('.color-swatch.selected')?.classList.remove('selected');
             target.classList.add('selected');
@@ -887,7 +1126,17 @@
         }
     });
     
-    // --- Panel Buttons ---
+    container.addEventListener('change', (e) => {
+        if (e.target.matches('.segment-meta-input')) {
+            const segmentId = e.target.dataset.segmentId;
+            const newValue = parseFloat(e.target.value) || 1;
+            if (newValue !== (state.metasPorSegmento[segmentId] || 5)) {
+                updateMeta(segmentId, newValue);
+            }
+        }
+    });
+
+    // --- Panel & Modal Buttons ---
     settingsBtn.addEventListener('click', () => {
         const isSettingsActive = settingsPanel.classList.contains('active');
         ui.showPanel(isSettingsActive ? 'ensinoMedio' : 'settings');
@@ -898,18 +1147,19 @@
         ui.showPanel(isLogsActive ? 'ensinoMedio' : 'logs');
     });
 
+    modalBtnConfirm.addEventListener('click', () => resolveConfirmation(true));
+    modalBtnCancel.addEventListener('click', () => {
+        resolveConfirmation(false);
+        ui.hideConfirmation();
+    });
+
     document.getElementById('newTurmaSegment').addEventListener('change', updateColorSelector);
     document.getElementById('addTurmaBtn').addEventListener('click', addTurma);
-    document.getElementById('metaPerStudent').addEventListener('change', (e) => {
-        const newValue = parseFloat(e.target.value) || 1;
-        if (newValue !== localState.metaPerStudent) {
-            updateMeta(newValue);
-        }
-    });
     
     // --- INITIALIZATION ---
     renderAll();
-})();
+    setupFirebase();
+
 </script>
 
 </body>
